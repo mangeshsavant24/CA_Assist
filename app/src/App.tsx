@@ -77,8 +77,8 @@ function App() {
                 key={id}
                 onClick={() => setActiveTab(id as any)}
                 className={`relative px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${activeTab === id
-                    ? 'bg-white/10 text-[#10b981] shadow-sm border border-[#10b981]/20'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-white/10 text-[#10b981] shadow-sm border border-[#10b981]/20'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
               >
                 {label}
@@ -114,8 +114,8 @@ function App() {
                   setMobileMenuOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === id
-                    ? 'bg-[#10b981]/10 text-[#10b981]'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-[#10b981]/10 text-[#10b981]'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
               >
                 <Icon size={18} />
