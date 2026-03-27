@@ -4,9 +4,10 @@ import { ChatScreen } from './components/ChatScreen'
 import { RegimeCalculator } from './components/RegimeCalculator'
 import { DocumentUpload } from './components/DocumentUpload'
 import { FundAccounting } from './components/FundAccounting'
+import { ForexValuation } from './components/ForexValuation'
 import { HomeScreen } from './components/HomeScreen'
 import { AuthModal } from './components/AuthModal'
-import { LogOut, Menu, X, Home, MessageSquare, TrendingUp, PieChart, Upload } from 'lucide-react'
+import { LogOut, Menu, X, Home, MessageSquare, TrendingUp, PieChart, Upload, DollarSign } from 'lucide-react'
 import { Button } from './components/ui/Button'
 import { CanvasDots } from './components/CanvasDots'
 
@@ -33,6 +34,7 @@ function App() {
     { id: 'regime', label: 'Regime Calculator', icon: TrendingUp },
     { id: 'fund', label: 'Fund Accounting', icon: PieChart },
     { id: 'document', label: 'Document Upload', icon: Upload },
+    { id: 'forex', label: 'Forex Valuation', icon: DollarSign },
   ]
 
   const headerTitle = useMemo(() => {
@@ -41,6 +43,7 @@ function App() {
       case 'regime': return 'Regime Calculator'
       case 'fund': return 'Fund Accounting'
       case 'document': return 'Document Upload'
+      case 'forex': return 'Forex Valuation'
       default: return 'Dashboard'
     }
   }, [activeTab])
@@ -147,6 +150,7 @@ function App() {
                   {activeTab === 'regime' && <RegimeCalculator />}
                   {activeTab === 'document' && <DocumentUpload />}
                   {activeTab === 'fund' && <FundAccounting />}
+                  {activeTab === 'forex' && <ForexValuation />}
                 </div>
               )
             ) : (
