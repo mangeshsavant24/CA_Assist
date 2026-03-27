@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import query, document, regime, capital_budget, fund, auth, forex, inventory, costing, make_or_buy, audit
+from api.routes import query, document, regime, capital_budget, fund, auth, forex
 from database import init_db
 
 app = FastAPI(title="CA-Assist API", version="1.0.0")
@@ -28,10 +28,6 @@ app.include_router(regime.router, prefix="/regime", tags=["Regime Compare"])
 app.include_router(capital_budget.router, prefix="/capital-budget", tags=["Capital Budget"])
 app.include_router(fund.router, prefix="/fund", tags=["Fund Accounting"])
 app.include_router(forex.router, prefix="/forex", tags=["Forex Valuation"])
-app.include_router(inventory.router, prefix="/inventory", tags=["Inventory Valuation"])
-app.include_router(costing.router, prefix="/costing", tags=["Costing Forecasting"])
-app.include_router(make_or_buy.router, prefix="/make-or-buy", tags=["Make or Buy"])
-app.include_router(audit.router, prefix="/audit", tags=["Financial Audit"])
 
 @app.get("/health")
 def health_check():

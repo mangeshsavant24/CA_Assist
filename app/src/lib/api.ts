@@ -226,4 +226,48 @@ export const loginAPI = async (credentials: UserLogin): Promise<AuthToken> => {
   return response.data
 }
 
+// Forex Valuation Interfaces
+export interface ForexExposureNew {
+  id: string
+  currency_pair: string
+  exposure_type: 'Receivable' | 'Payable'
+  foreign_amount: number
+  initial_rate: number
+  current_rate: number
+  description?: string
+}
+
+export interface ForexValuationInputNew {
+  valuation_date: string
+  base_currency: string
+  exposures: ForexExposureNew[]
+}
+
+export interface ForexExposureResult {
+  id: string
+  currency_pair: string
+  exposure_type: string
+  foreign_amount: number
+  initial_base_value: number
+  current_base_value: number
+  gain_loss: number
+  status: 'Gain' | 'Loss' | 'Neutral'
+  description?: string
+}
+
+export interface ForexValuationOutputNew {
+  valuation_date: string
+  base_currency: string
+  total_initial_value: number
+  total_current_value: number
+  net_gain_loss: number
+  results: ForexExposureResult[]
+  recommendation: string
+}
+
+export const evaluateForexAPI = async (input: ForexValuationInputNew): Promise<ForexValuationOutputNew> => {
+  const response = await apiClient.post<ForexValuationOutputNew>('/forex/evaluate', input)
+  return response.data
+}
+
 export default apiClient

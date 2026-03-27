@@ -7,6 +7,8 @@ import { DocumentUpload } from './components/DocumentUpload'
 import { FundAccounting } from './components/FundAccounting'
 import { HomeScreen } from './components/HomeScreen'
 import { AuthModal } from './components/AuthModal'
+// Import new pages
+import ForexValuationPage from './pages/ForexValuationPage'
 import { Moon, Sun, LogOut } from 'lucide-react'
 import { Button } from './components/ui/Button'
 
@@ -37,6 +39,8 @@ function App() {
         return 'Fund Accounting'
       case 'document':
         return 'Document Upload'
+      case 'forex':
+        return 'Forex Valuation'
       default:
         return 'Dashboard'
     }
@@ -74,6 +78,7 @@ function App() {
               {activeTab === 'regime' && <RegimeCalculator />}
               {activeTab === 'document' && <DocumentUpload />}
               {activeTab === 'fund' && <FundAccounting />}
+              {activeTab === 'forex' && <ForexValuationPage />}
             </>
           ) : (
             activeTab !== 'home' && (

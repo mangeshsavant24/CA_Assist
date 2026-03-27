@@ -10,7 +10,7 @@ class Orchestrator:
             "You are an intent classifier for a CA virtual assistant. "
             "Based on the user's query, return a JSON object with a single key 'intent'. "
             "The value must be exactly one of: TAX_QUERY, GST_QUERY, DOCUMENT_UPLOAD, ADVISORY, REGIME_COMPARE, "
-            "FOREX_VALUATION, INVENTORY_VALUATION, COSTING_FORECASTING, MAKE_OR_BUY, FINANCIAL_AUDIT. "
+            "FOREX_VALUATION. "
             "Return only valid JSON."
         )
 
@@ -53,17 +53,5 @@ class Orchestrator:
         elif intent == Intent.FOREX_VALUATION:
             from agents.forex_agent import ForexAgent
             return ForexAgent().handle(query)
-        elif intent == Intent.INVENTORY_VALUATION:
-            from agents.inventory_agent import InventoryAgent
-            return InventoryAgent().handle(query)
-        elif intent == Intent.COSTING_FORECASTING:
-            from agents.costing_agent import CostingAgent
-            return CostingAgent().handle(query)
-        elif intent == Intent.MAKE_OR_BUY:
-            from agents.make_or_buy_agent import MakeOrBuyAgent
-            return MakeOrBuyAgent().handle(query)
-        elif intent == Intent.FINANCIAL_AUDIT:
-            from agents.audit_agent import AuditAgent
-            return AuditAgent().handle(query)
 
         return {"answer": "Intent not supported yet.", "citations": []}
