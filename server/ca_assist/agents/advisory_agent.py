@@ -1,4 +1,4 @@
-from . import get_llm
+from agents import get_llm
 from rag.retriever import fetch_relevant_docs
 from engines.citation_engine import CitationEngine
 from langchain_core.messages import SystemMessage, HumanMessage

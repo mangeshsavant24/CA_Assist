@@ -35,7 +35,7 @@ interface ProcessingStep {
 }
 
 export const DocumentUpload: React.FC = () => {
-  const { sessionId } = useAppStore();
+  const { userId } = useAppStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -128,49 +128,62 @@ export const DocumentUpload: React.FC = () => {
     setTimeout(() => updateStep('analyzing', 'processing'), 1100);
 
     try {
-      const response = await uploadDocumentAPI(file, sessionId);
+      const response = await uploadDocumentAPI(file, userId);
 
       // Simulate extraction duration
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Determine document type based on extracted data
-      if (response.extracted_data?.gross_salary) {
+      // Use the document info from response
+      const docInfo = response.document;
+      const ingestInfo = response.ingest_result;
+
+      // Set success state
+      setExtractedData({
+        filename: docInfo.original_filename,
+        file_size: docInfo.file_size,
+        chunks_added: ingestInfo.chunks_added,
+        upload_status: 'success',
+      });
+
+      // Determine document type based on filename
+      const filename = docInfo.original_filename.toLowerCase();
+      if (filename.includes('salary') || filename.includes('slip')) {
         setDocumentType('salary_slip');
-      } else if (response.extracted_data?.pan) {
+      } else if (filename.includes('form') || filename.includes('16')) {
         setDocumentType('form16');
+      } else {
+        setDocumentType('invoice');
       }
 
-      setExtractedData(response.extracted_data);
-
-      // Generate sample insights
+      // Generate insights based on upload
       const sampleInsights = [
         {
           type: 'tip' as const,
-          title: '80C Headroom Available',
-          description: `Your PF contribution is ₹${formatCurrency(
-            response.extracted_data?.pf || 0
-          )}. You can still invest more under 80C to reach the ₹1,50,000 limit.`,
-          source: 'ITA 1961 · §80C',
-        },
-        {
-          type: 'warning' as const,
-          title: 'HRA Exemption Applicable',
-          description: `Your salary includes HRA component. Ensure you have rent receipts to claim this exemption of ₹XXXXX.`,
-          source: 'ITA 1961 · §10(13A)',
+          title: 'Document Successfully Uploaded',
+          description: `Your document "${docInfo.original_filename}" has been uploaded and indexed. ${ingestInfo.chunks_added} sections were extracted for analysis.`,
+          source: 'CA-Assist',
         },
         {
           type: 'action' as const,
-          title: 'Regime Recommendation Ready',
+          title: 'Ask AI Assistant',
           description:
-            'Based on your extracted salary data, click below to instantly see which regime saves you more.',
+            'Switch to Chat mode to ask questions about your uploaded document. The AI will analyze and provide insights.',
+          source: 'CA-Assist',
+        },
+        {
+          type: 'tip' as const,
+          title: 'Document Storage',
+          description:
+            'Your document is securely stored for future reference. You can upload multiple documents and query across all of them.',
           source: 'CA-Assist',
         },
       ];
       setInsights(sampleInsights);
 
       updateStep('analyzing', 'completed');
-    } catch (err) {
-      setError('Failed to process document. Please try again.');
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.detail || 'Failed to process document. Please try again.';
+      setError(errorMsg);
       console.error('Upload error:', err);
       updateStep('analyzing', 'completed');
     } finally {

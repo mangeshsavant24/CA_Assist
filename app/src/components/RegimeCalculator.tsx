@@ -10,9 +10,19 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { compareRegimeAPI } from '../lib/api';
+import { compareRegimeAPI, evaluateCapitalBudgetAPI } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 import { cn } from '../lib/utils';
+
+interface CapitalBudgetOutput {
+  project_name?: string;
+  currency: 'INR' | 'USD';
+  npv: number;
+  irr?: number;
+  payback_period?: number;
+  profitability_index?: number;
+  recommendation: string;
+}
 
 interface RegimeOutput {
   old_regime: RegimeData;
@@ -28,7 +38,7 @@ interface RegimeOutput {
 
 interface RegimeData {
   taxable_income: number;
-  total_deductions: number;
+  total_deductions?: number;
   slab_breakdown: Array<{
     slab: string;
     rate: string;
@@ -85,7 +95,7 @@ const RegimeCard = ({
         <div className="flex justify-between items-center text-sm">
           <span className="text-slate-400">Gross Income</span>
           <span className="font-mono text-slate-100">
-            {formatCurrency(data.taxable_income + data.total_deductions)}
+            {formatCurrency(data.taxable_income + (data.total_deductions || 0))}
           </span>
         </div>
 
@@ -93,7 +103,7 @@ const RegimeCard = ({
         <div className="flex justify-between items-center text-sm">
           <span className="text-slate-400">Total Deductions</span>
           <span className="font-mono text-red-400">
-            −{formatCurrency(data.total_deductions)}
+            −{formatCurrency(data.total_deductions || 0)}
           </span>
         </div>
 
@@ -186,13 +196,22 @@ const RegimeCard = ({
 };
 
 export const RegimeCalculator: React.FC = () => {
+  const [activeMode, setActiveMode] = useState<'regime' | 'capital'>('regime');
+
   const [grossIncome, setGrossIncome] = useState('');
   const [sec80c, setSec80c] = useState('');
   const [sec80d, setSec80d] = useState('');
   const [hraExemption, setHraExemption] = useState('');
   const [otherDeductions, setOtherDeductions] = useState('');
 
+  const [capitalProjectName, setCapitalProjectName] = useState('');
+  const [capitalInitialInvestment, setCapitalInitialInvestment] = useState('');
+  const [capitalCashFlows, setCapitalCashFlows] = useState('');
+  const [capitalDiscountRate, setCapitalDiscountRate] = useState('');
+  const [capitalCurrency, setCapitalCurrency] = useState<'INR' | 'USD'>('INR');
+
   const [result, setResult] = useState<RegimeOutput | null>(null);
+  const [capitalResult, setCapitalResult] = useState<CapitalBudgetOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -232,6 +251,54 @@ export const RegimeCalculator: React.FC = () => {
     setSec80d('');
     setHraExemption('');
     setOtherDeductions('');
+    setCapitalResult(null);
+    setCapitalProjectName('');
+    setCapitalInitialInvestment('');
+    setCapitalCashFlows('');
+    setCapitalDiscountRate('');
+    setCapitalCurrency('INR');
+  };
+
+  const handleCapitalCalculate = async () => {
+    if (!capitalInitialInvestment || Number(capitalInitialInvestment) <= 0) {
+      setError('Initial investment must be greater than 0');
+      return;
+    }
+
+    if (!capitalCashFlows) {
+      setError('Enter 1 or more cash flow values separated by commas');
+      return;
+    }
+
+    const flows = capitalCashFlows
+      .split(',')
+      .map((v) => parseFloat(v.trim()))
+      .filter((v) => !Number.isNaN(v));
+
+    if (!flows.length) {
+      setError('Cash flows must be valid numbers');
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      const response = await evaluateCapitalBudgetAPI({
+        project_name: capitalProjectName || undefined,
+        initial_investment: Number(capitalInitialInvestment),
+        cash_flows: flows,
+        discount_rate: Number(capitalDiscountRate || 10),
+        currency: capitalCurrency,
+      });
+      setCapitalResult(response);
+      setResult(null);
+    } catch (err) {
+      setError('Failed to calculate capital budgeting. Please try again.');
+      console.error('Capital budgeting error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sec80cWarning =
@@ -241,6 +308,32 @@ export const RegimeCalculator: React.FC = () => {
 
   return (
     <div className="min-h-full bg-slate-950 px-4 py-6">
+      <div className="max-w-5xl mx-auto mb-4">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveMode('regime')}
+            className={cn(
+              'rounded-lg px-4 py-2 text-sm font-semibold',
+              activeMode === 'regime'
+                ? 'bg-teal-600 text-white'
+                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            )}
+          >
+            Tax Regime Comparison
+          </button>
+          <button
+            onClick={() => setActiveMode('capital')}
+            className={cn(
+              'rounded-lg px-4 py-2 text-sm font-semibold',
+              activeMode === 'capital'
+                ? 'bg-teal-600 text-white'
+                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            )}
+          >
+            Capital Budgeting
+          </button>
+        </div>
+      </div>
       <div className="max-w-5xl mx-auto flex gap-6">
         {/* Left Panel - Input */}
         <div className="w-96 flex-shrink-0">
@@ -266,137 +359,228 @@ export const RegimeCalculator: React.FC = () => {
                   </div>
                 )}
 
-                {/* Gross Annual Income */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Gross Annual Income (₹) *
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="e.g. 900000"
-                    value={grossIncome}
-                    onChange={(e) => setGrossIncome(e.target.value)}
-                    className="bg-slate-800 border-slate-700"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    Include salary, freelance, rental income
-                  </p>
-                </div>
-
-                {/* Section 80C */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Section 80C Investments (₹)
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="Max ₹1,50,000"
-                    value={sec80c}
-                    onChange={(e) => setSec80c(e.target.value)}
-                    className="bg-slate-800 border-slate-700"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    ELSS, PPF, LIC, PF contributions
-                  </p>
-                  {sec80cWarning && (
-                    <p className="text-xs text-amber-400 mt-2">⚠ {sec80cWarning}</p>
-                  )}
-                </div>
-
-                {/* HRA Exemption */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    HRA Exemption (₹)
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="0 if not applicable"
-                    value={hraExemption}
-                    onChange={(e) => setHraExemption(e.target.value)}
-                    className="bg-slate-800 border-slate-700"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    Only applicable in Old Regime
-                  </p>
-                </div>
-
-                {/* Other Deductions */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Other Deductions (₹)
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="80D, 80E, 80G, etc."
-                    value={otherDeductions}
-                    onChange={(e) => setOtherDeductions(e.target.value)}
-                    className="bg-slate-800 border-slate-700"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    Health insurance, education loan, donations
-                  </p>
-                </div>
-
-                {/* Advanced Section */}
-                <button
-                  onClick={() => setAdvancedOpen(!advancedOpen)}
-                  className="w-full flex items-center gap-2 text-sm text-teal-400 hover:text-teal-300"
-                >
-                  <ChevronDown
-                    size={16}
-                    className={cn('transition-transform', advancedOpen && 'rotate-180')}
-                  />
-                  Advanced
-                </button>
-
-                {advancedOpen && (
-                  <div className="border-t border-slate-700 pt-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium text-slate-300">
-                          Standard Deduction
-                        </label>
-                        <Info size={14} className="text-slate-500" />
-                      </div>
-                      <input
-                        type="text"
-                        value="₹75,000"
-                        disabled
-                        className="w-24 text-right text-slate-400 bg-transparent text-sm"
-                      />
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      Old: ₹50,000 | New: ₹75,000
-                    </p>
-
+                {activeMode === 'regime' ? (
+                  <>
+                    {/* Gross Annual Income */}
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-2">
-                        NPS 80CCD(1B) (₹)
+                        Gross Annual Income (₹) *
                       </label>
                       <Input
                         type="number"
-                        placeholder="Max ₹50,000"
+                        placeholder="e.g. 900000"
+                        value={grossIncome}
+                        onChange={(e) => setGrossIncome(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Include salary, freelance, rental income
+                      </p>
+                    </div>
+
+                    {/* Section 80C */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Section 80C Investments (₹)
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="Max ₹1,50,000"
+                        value={sec80c}
+                        onChange={(e) => setSec80c(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        ELSS, PPF, LIC, PF contributions
+                      </p>
+                      {sec80cWarning && (
+                        <p className="text-xs text-amber-400 mt-2">⚠ {sec80cWarning}</p>
+                      )}
+                    </div>
+
+                    {/* HRA Exemption */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        HRA Exemption (₹)
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="0 if not applicable"
+                        value={hraExemption}
+                        onChange={(e) => setHraExemption(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Only applicable in Old Regime
+                      </p>
+                    </div>
+
+                    {/* Other Deductions */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Other Deductions (₹)
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="80D, 80E, 80G, etc."
+                        value={otherDeductions}
+                        onChange={(e) => setOtherDeductions(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Health insurance, education loan, donations
+                      </p>
+                    </div>
+
+                    {/* Advanced Section */}
+                    <button
+                      onClick={() => setAdvancedOpen(!advancedOpen)}
+                      className="w-full flex items-center gap-2 text-sm text-teal-400 hover:text-teal-300"
+                    >
+                      <ChevronDown
+                        size={16}
+                        className={cn('transition-transform', advancedOpen && 'rotate-180')}
+                      />
+                      Advanced
+                    </button>
+
+                    {advancedOpen && (
+                      <div className="border-t border-slate-700 pt-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium text-slate-300">
+                              Standard Deduction
+                            </label>
+                            <Info size={14} className="text-slate-500" />
+                          </div>
+                          <input
+                            type="text"
+                            value="₹75,000"
+                            disabled
+                            className="w-24 text-right text-slate-400 bg-transparent text-sm"
+                          />
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Old: ₹50,000 | New: ₹75,000
+                        </p>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">
+                            NPS 80CCD(1B) (₹)
+                          </label>
+                          <Input
+                            type="number"
+                            placeholder="Max ₹50,000"
+                            className="bg-slate-800 border-slate-700"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={handleCalculate}
+                      disabled={loading}
+                      className="w-full bg-teal-600 hover:bg-teal-700 py-3"
+                    >
+                      {loading ? 'Calculating...' : 'Calculate & Compare →'}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Project Name (Optional)
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Project Alpha"
+                        value={capitalProjectName}
+                        onChange={(e) => setCapitalProjectName(e.target.value)}
                         className="bg-slate-800 border-slate-700"
                       />
                     </div>
-                  </div>
-                )}
 
-                {/* Calculate Button */}
-                <Button
-                  onClick={handleCalculate}
-                  disabled={loading}
-                  className="w-full bg-teal-600 hover:bg-teal-700 py-3"
-                >
-                  {loading ? 'Calculating...' : 'Calculate & Compare →'}
-                </Button>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Initial Investment (₹)
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 1500000"
+                        value={capitalInitialInvestment}
+                        onChange={(e) => setCapitalInitialInvestment(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Capital outlay before cash inflows start
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Cash Flows (comma-separated ₹)
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="e.g. 400000,500000,600000"
+                        value={capitalCashFlows}
+                        onChange={(e) => setCapitalCashFlows(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Enter post-tax project cash inflows per period
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Discount Rate (%)
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 10"
+                        value={capitalDiscountRate}
+                        onChange={(e) => setCapitalDiscountRate(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Cost of capital or required return rate
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Currency
+                      </label>
+                      <select
+                        value={capitalCurrency}
+                        onChange={(e) => setCapitalCurrency(e.target.value as 'INR' | 'USD')}
+                        className="w-full bg-slate-800 border-slate-700 px-3 py-2 rounded"
+                      >
+                        <option value="INR">INR (₹)</option>
+                        <option value="USD">USD ($)</option>
+                      </select>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Set unit for interpretation / reports
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={handleCapitalCalculate}
+                      disabled={loading}
+                      className="w-full bg-teal-600 hover:bg-teal-700 py-3"
+                    >
+                      {loading ? 'Calculating...' : 'Evaluate Capital Budget →'}
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
         </div>
 
         {/* Right Panel - Results */}
-        {result && (
+        {activeMode === 'regime' && result && (
           <div className="flex-1 space-y-4 animate-in slide-in-from-right-12 fade-in duration-300">
             {/* Verdict Banner */}
             <Card
@@ -462,7 +646,7 @@ export const RegimeCalculator: React.FC = () => {
                     {(
                       (result.old_regime.total_tax /
                         (result.old_regime.taxable_income +
-                          result.old_regime.total_deductions)) *
+                          (result.old_regime.total_deductions || 0))) *
                       100
                     ).toFixed(1)}
                     %
@@ -477,7 +661,7 @@ export const RegimeCalculator: React.FC = () => {
                     {(
                       (result.new_regime.total_tax /
                         (result.new_regime.taxable_income +
-                          result.new_regime.total_deductions)) *
+                          (result.new_regime.total_deductions || 0))) *
                       100
                     ).toFixed(1)}
                     %
@@ -513,6 +697,65 @@ export const RegimeCalculator: React.FC = () => {
             >
               Calculate Another
             </Button>
+          </div>
+        )}
+
+        {activeMode === 'capital' && capitalResult && (
+          <div className="flex-1 space-y-4 animate-in slide-in-from-right-12 fade-in duration-300">
+            <Card className="bg-slate-900 border-slate-700">
+              <CardHeader>
+                <CardTitle>Capital Budgeting Result</CardTitle>
+                <p className="text-xs text-slate-400">
+                  Project: {capitalResult.project_name ?? 'Unnamed'} ({capitalResult.currency})
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-950/60 p-3 rounded-lg">
+                    <p className="text-xs text-slate-400">NPV</p>
+                    <p className="font-mono text-xl font-bold">
+                      {capitalResult.currency === 'INR' ? '₹' : '$'}{capitalResult.npv.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Net present value: discounted profit in today’s currency.
+                    </p>
+                  </div>
+                  <div className="bg-slate-950/60 p-3 rounded-lg">
+                    <p className="text-xs text-slate-400">IRR</p>
+                    <p className="font-mono text-xl font-bold">{capitalResult.irr?.toFixed(2)}%</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Internal rate of return: expected yield per year.
+                    </p>
+                  </div>
+                  <div className="bg-slate-950/60 p-3 rounded-lg">
+                    <p className="text-xs text-slate-400">Payback Period</p>
+                    <p className="font-mono text-xl font-bold">{capitalResult.payback_period?.toFixed(2)} years</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Time to recover the upfront investment.
+                    </p>
+                  </div>
+                  <div className="bg-slate-950/60 p-3 rounded-lg">
+                    <p className="text-xs text-slate-400">Profitability Index</p>
+                    <p className="font-mono text-xl font-bold">{capitalResult.profitability_index?.toFixed(3)}</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      PV inflows / investment; {'>'}1 means value creation.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-teal-950/60 border border-teal-700 rounded-lg p-3">
+                  <p className="text-xs text-teal-300">Recommendation</p>
+                  <p className="font-medium text-slate-100">{capitalResult.recommendation}</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Based on NPV & IRR comparison with discount rate.
+                  </p>
+                </div>
+
+                <Button onClick={handleReset} variant="secondary" className="w-full">
+                  New Capital Budget Analysis
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

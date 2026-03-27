@@ -1,7 +1,7 @@
 import json
 from langchain_core.messages import SystemMessage, HumanMessage
 from api.schemas import Intent
-from . import get_llm
+from agents import get_llm
 
 class Orchestrator:
     def __init__(self):
@@ -38,16 +38,16 @@ class Orchestrator:
         if intent == Intent.REGIME_COMPARE:
             return None # Expected to be handled by API caller
         elif intent == Intent.TAX_QUERY:
-            from .tax_agent import TaxAgent
+            from agents.tax_agent import TaxAgent
             return TaxAgent().handle(query)
         elif intent == Intent.GST_QUERY:
-            from .gst_agent import GSTAgent
+            from agents.gst_agent import GSTAgent
             return GSTAgent().handle(query)
         elif intent == Intent.DOCUMENT_UPLOAD:
-            from .document_agent import DocumentAgent
+            from agents.document_agent import DocumentAgent
             return DocumentAgent().handle(kwargs.get("file_path"))
         elif intent == Intent.ADVISORY:
-            from .advisory_agent import AdvisoryAgent
+            from agents.advisory_agent import AdvisoryAgent
             return AdvisoryAgent().handle(query)
 
         return {"answer": "Intent not supported yet.", "citations": []}

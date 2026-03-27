@@ -7,7 +7,7 @@ class RegimeEngine:
         std_deduction_new = 75000.0
         
         # --- Old Regime ---
-        deductions_old = min(request.sec_80c, 150000.0) + min(request.sec_80d, 25000.0) + request.hra_exemption
+        deductions_old = min(request.sec_80c, 150000.0) + min(request.sec_80d, 25000.0) + request.hra_exemption + request.other_deductions
         total_deduction_old = std_deduction_old + deductions_old
         taxable_income_old = max(0.0, request.gross_income - total_deduction_old)
         

@@ -2,7 +2,7 @@ import json
 import PyPDF2
 from PIL import Image
 import pytesseract
-from . import get_llm
+from agents import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
 class DocumentAgent:

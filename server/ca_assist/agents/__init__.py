@@ -3,12 +3,18 @@ import os
 try:
     from langchain_openai import ChatOpenAI
 except ImportError:
-    from langchain.chat_models import ChatOpenAI
+    try:
+        from langchain_community.chat_models import ChatOpenAI
+    except ImportError:
+        ChatOpenAI = None
 
 try:
     from langchain_ollama import ChatOllama
 except ImportError:
-    from langchain_community.chat_models import ChatOllama
+    try:
+        from langchain_community.chat_models import ChatOllama
+    except ImportError:
+        ChatOllama = None
 
 from dotenv import load_dotenv
 

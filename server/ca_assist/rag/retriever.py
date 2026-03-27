@@ -1,5 +1,5 @@
 from langchain_chroma import Chroma
-from .embedder import get_embedder
+from rag.embedder import get_embedder
 
 def get_retriever(persist_dir: str = "./chroma_db/"):
     embedder = get_embedder()

@@ -1,17 +1,19 @@
 import { useAppStore } from '@/store/appStore'
-import { MessageSquare, TrendingUp, Upload } from 'lucide-react'
+import { MessageSquare, TrendingUp, Upload, PieChart } from 'lucide-react'
 
 export default function Sidebar() {
   const { activeTab, setActiveTab } = useAppStore()
 
   const navItems = [
+    { id: 'home', label: 'Home', icon: MessageSquare },
     { id: 'chat', label: 'Chat', icon: MessageSquare },
     { id: 'regime', label: 'Regime Calculator', icon: TrendingUp },
+    { id: 'fund', label: 'Fund Accounting', icon: PieChart },
     { id: 'document', label: 'Document Upload', icon: Upload },
   ]
 
   return (
-    <div className="w-60 bg-slate-950 border-r border-slate-800 flex flex-col">
+    <div className="sidebar w-60 bg-slate-950 border-r border-slate-800 flex flex-col">
       {/* Logo Section */}
       <div className="p-5 border-b border-slate-800">
         <div className="flex items-center gap-2">

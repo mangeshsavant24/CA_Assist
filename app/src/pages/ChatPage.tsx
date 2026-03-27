@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/appStore'
 import { queryAPI } from '@/lib/api'
 import { formatDate, cn } from '@/lib/utils'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Send, Loader } from 'lucide-react'
@@ -110,7 +110,7 @@ export default function ChatPage() {
                       <div className="flex flex-wrap gap-2">
                         {message.citations.map((citation, idx) => (
                           <Badge key={idx} variant="citation" className="text-xs font-mono">
-                            {citation}
+                            {typeof citation === 'string' ? citation : citation.section || citation.source}
                           </Badge>
                         ))}
                       </div>

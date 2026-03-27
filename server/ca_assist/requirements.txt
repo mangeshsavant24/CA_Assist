@@ -2,10 +2,11 @@ fastapi
 uvicorn
 python-dotenv
 pydantic
-langchain==0.3.1
-langchain-community==0.3.1
-langchain-core==0.3.12
-langchain-ollama==0.2.1
+pydantic[email]
+langchain
+langchain-community
+langchain-core
+langchain-ollama
 langchain-huggingface
 langchain-chroma
 chromadb
@@ -18,3 +19,7 @@ httpx
 pytest
 torch>=2.0.0
 torchvision>=0.17.0
+sqlalchemy
+python-jose[cryptography]
+passlib[bcrypt]
+PyJWT

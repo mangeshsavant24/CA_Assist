@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { compareRegimeAPI, RegimeOutput } from '@/lib/api'
 import { formatTaxAmount, formatPercentage } from '@/lib/utils'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-import { Label } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Label } from '@/components/ui/Label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import Separator from '@/components/ui/Separator'
+import { Separator } from '@/components/ui/Separator'
 import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react'
 
 export default function RegimeCalculatorPage() {
@@ -14,6 +14,7 @@ export default function RegimeCalculatorPage() {
   const [sec80c, setSec80c] = useState<string>('')
   const [sec80d, setSec80d] = useState<string>('')
   const [hraExemption, setHraExemption] = useState<string>('')
+  const [otherDeductions, setOtherDeductions] = useState<string>('')
   const [result, setResult] = useState<RegimeOutput | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,6 +35,7 @@ export default function RegimeCalculatorPage() {
         sec_80c: sec80c ? parseInt(sec80c) : 0,
         sec_80d: sec80d ? parseInt(sec80d) : 0,
         hra_exemption: hraExemption ? parseInt(hraExemption) : 0,
+        other_deductions: otherDeductions ? parseInt(otherDeductions) : 0,
       })
       setResult(response)
     } catch (err: any) {
@@ -142,6 +144,24 @@ export default function RegimeCalculatorPage() {
                     </div>
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="otherDeductions" className="block">
+                      Other Deductions (Optional)
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400">₹</span>
+                      <Input
+                        id="otherDeductions"
+                        type="number"
+                        value={otherDeductions}
+                        onChange={(e) => setOtherDeductions(e.target.value)}
+                        placeholder="0"
+                        className="flex-1"
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500">Health insurance, education loan, donations</p>
+                  </div>
+
                   <Button type="submit" variant="primary" className="w-full" isLoading={isLoading}>
                     Calculate & Compare
                   </Button>
@@ -216,6 +236,7 @@ export default function RegimeCalculatorPage() {
                 setSec80c('')
                 setSec80d('')
                 setHraExemption('')
+                setOtherDeductions('')
               }}
             >
               Calculate Another

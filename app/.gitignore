@@ -37,7 +37,3 @@ out
 node_modules
 package-lock.json
 yarn.lock
-
-
-server\ca_assist\Knowledge_base\*
-server\ca_assist\venv\Lib\site-packages\torch\lib\torch_cpu.dll

@@ -3,7 +3,7 @@ import re
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-from .embedder import get_embedder
+from rag.embedder import get_embedder
 
 def ingest_documents(kb_dir: str = "./knowledge_base/", persist_dir: str = "./chroma_db/"):
     if not os.path.exists(kb_dir):

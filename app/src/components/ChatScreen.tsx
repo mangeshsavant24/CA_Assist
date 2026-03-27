@@ -152,7 +152,7 @@ export const ChatScreen: React.FC = () => {
     chatHistory,
     addMessage,
     clearChat,
-    sessionId,
+    userId,
     isLoading,
     setIsLoading,
   } = useAppStore();
@@ -183,11 +183,7 @@ export const ChatScreen: React.FC = () => {
       content: question,
       timestamp: new Date(),
     };
-    addMessage({
-      role: 'user',
-      content: question,
-      timestamp: new Date(),
-    });
+    addMessage(userMessage);
 
     setIsTyping(true);
     setIsLoading(true);
@@ -195,7 +191,7 @@ export const ChatScreen: React.FC = () => {
     try {
       const response = await queryAPI({
         query: question,
-        user_id: sessionId,
+        user_id: userId,
       });
 
       const assistantMessage: Message = {
@@ -207,12 +203,7 @@ export const ChatScreen: React.FC = () => {
         timestamp: new Date(),
       };
 
-      addMessage({
-        role: 'assistant',
-        content: response.answer,
-        citations: response.citations,
-        timestamp: new Date(),
-      });
+      addMessage(assistantMessage);
     } catch (err) {
       setError('Something went wrong. Please try again.');
       console.error('Chat error:', err);

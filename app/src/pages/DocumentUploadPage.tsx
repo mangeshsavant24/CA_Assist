@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { uploadDocumentAPI } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
-import Button from '@/components/ui/Button'
+import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Separator from '@/components/ui/Separator'
