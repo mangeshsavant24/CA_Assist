@@ -76,7 +76,8 @@ export const useAppStore = create<AppStore>((set) => ({
     // Try to load token from localStorage
     const storedToken = localStorage.getItem('accessToken')
     
-    set({ sessionId, userId, accessToken: storedToken || null })
+    // FIXED: Set isAuthenticated flag based on whether token was restored
+    set({ sessionId, userId, accessToken: storedToken || null, isAuthenticated: !!storedToken })
   },
   
   // Authentication

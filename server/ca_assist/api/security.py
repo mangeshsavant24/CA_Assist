@@ -3,9 +3,23 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 import os
+import warnings
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# FIXED: Suppress bcrypt version warning (bcrypt 4.x removed __about__ module)
+warnings.filterwarnings(
+    "ignore",
+    message=".*error reading bcrypt version.*"
+)
+
+# Password hashing
+# FIXED: Use bcrypt only (argon2_cffi not installed, bcrypt is stable and available)
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+)
 
 # JWT configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production")
