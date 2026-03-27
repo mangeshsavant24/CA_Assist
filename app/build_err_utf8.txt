@@ -1,0 +1,15 @@
+﻿
+> ca-assist-frontend@0.1.0 build
+> tsc && vite build
+
+src/components/ChatScreen.tsx(186,16): error TS2345: Argument of type 'Message' is not assignable to parameter of type 'import("D:/CA_Assist-1/app/src/store/appStore").Message'.
+  Types of property 'agent' are incompatible.
+    Type '"tax" | "gst" | "advisory" | undefined' is not assignable to type '"TAX_QUERY" | "GST_QUERY" | "ADVISORY" | "DOCUMENT_ANALYSIS" | undefined'.
+      Type '"tax"' is not assignable to type '"TAX_QUERY" | "GST_QUERY" | "ADVISORY" | "DOCUMENT_ANALYSIS" | undefined'.
+src/components/ChatScreen.tsx(206,18): error TS2345: Argument of type 'Message' is not assignable to parameter of type 'import("D:/CA_Assist-1/app/src/store/appStore").Message'.
+  Types of property 'agent' are incompatible.
+    Type '"tax" | "gst" | "advisory" | undefined' is not assignable to type '"TAX_QUERY" | "GST_QUERY" | "ADVISORY" | "DOCUMENT_ANALYSIS" | undefined'.
+      Type '"tax"' is not assignable to type '"TAX_QUERY" | "GST_QUERY" | "ADVISORY" | "DOCUMENT_ANALYSIS" | undefined'.
+src/components/DocumentUpload.tsx(617,31): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/lib/api.ts(4,34): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/pages/RegimeCalculatorPage.tsx(6,23): error TS2307: Cannot find module '@/components/ui/Label' or its corresponding type declarations.

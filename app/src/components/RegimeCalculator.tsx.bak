@@ -53,24 +53,6 @@ interface RegimeData {
   total_tax: number;
 }
 
-const FormattedInput = ({ value, onChange, placeholder, className, disabled = false }: any) => {
-  const displayValue = value ? new Intl.NumberFormat('en-IN').format(Number(value)) : '';
-  const handleChange = (e: any) => {
-    const raw = e.target.value.replace(/,/g, '');
-    if (/^\d*$/.test(raw)) onChange(raw);
-  };
-  return (
-    <Input 
-      type="text" 
-      value={displayValue} 
-      onChange={handleChange} 
-      placeholder={placeholder} 
-      className={cn("bg-slate-800 border-slate-700 font-mono tracking-wide text-white focus:border-teal-500/50 focus:ring-teal-500/20 transition-all", className)} 
-      disabled={disabled}
-    />
-  );
-};
-
 const RegimeCard = ({
   title,
   badge,
@@ -405,7 +387,7 @@ export const RegimeCalculator: React.FC = () => {
       )}
       <div className={cn(
         "mx-auto flex flex-col md:flex-row gap-6 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]",
-        (activeMode === 'regime' ? result : capitalResult) || loading
+        (activeMode === 'regime' ? result : capitalResult) 
           ? "max-w-5xl" 
           : "max-w-[384px]" 
       )}>
@@ -444,10 +426,12 @@ export const RegimeCalculator: React.FC = () => {
                       <label className="block text-sm font-medium text-slate-300 mb-2">
                         Gross Annual Income (₹) *
                       </label>
-                      <FormattedInput
-                        placeholder="e.g. 900,000"
+                      <Input
+                        type="number"
+                        placeholder="e.g. 900000"
                         value={grossIncome}
-                        onChange={(val: string) => setGrossIncome(val)}
+                        onChange={(e) => setGrossIncome(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
                       />
                       <p className="text-xs text-slate-500 mt-1">
                         Include salary, freelance, rental income
@@ -459,10 +443,12 @@ export const RegimeCalculator: React.FC = () => {
                       <label className="block text-sm font-medium text-slate-300 mb-2">
                         Section 80C Investments (₹)
                       </label>
-                      <FormattedInput
+                      <Input
+                        type="number"
                         placeholder="Max ₹1,50,000"
                         value={sec80c}
-                        onChange={(val: string) => setSec80c(val)}
+                        onChange={(e) => setSec80c(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
                       />
                       <p className="text-xs text-slate-500 mt-1">
                         ELSS, PPF, LIC, PF contributions
@@ -477,10 +463,12 @@ export const RegimeCalculator: React.FC = () => {
                       <label className="block text-sm font-medium text-slate-300 mb-2">
                         HRA Exemption (₹)
                       </label>
-                      <FormattedInput
+                      <Input
+                        type="number"
                         placeholder="0 if not applicable"
                         value={hraExemption}
-                        onChange={(val: string) => setHraExemption(val)}
+                        onChange={(e) => setHraExemption(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
                       />
                       <p className="text-xs text-slate-500 mt-1">
                         Only applicable in Old Regime
@@ -492,10 +480,12 @@ export const RegimeCalculator: React.FC = () => {
                       <label className="block text-sm font-medium text-slate-300 mb-2">
                         Other Deductions (₹)
                       </label>
-                      <FormattedInput
+                      <Input
+                        type="number"
                         placeholder="80D, 80E, 80G, etc."
                         value={otherDeductions}
-                        onChange={(val: string) => setOtherDeductions(val)}
+                        onChange={(e) => setOtherDeductions(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
                       />
                       <p className="text-xs text-slate-500 mt-1">
                         Health insurance, education loan, donations
@@ -521,12 +511,7 @@ export const RegimeCalculator: React.FC = () => {
                             <label className="text-sm font-medium text-slate-300">
                               Standard Deduction
                             </label>
-                            <div className="group relative flex items-center">
-                              <Info size={14} className="text-slate-500 hover:text-teal-400 cursor-help transition-colors" />
-                              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 p-2.5 bg-slate-800 text-xs text-slate-300 leading-relaxed rounded-lg shadow-2xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50 border border-slate-700/80">
-                                Automatically applied to all salaried income under both regimes. 
-                              </div>
-                            </div>
+                            <Info size={14} className="text-slate-500" />
                           </div>
                           <input
                             type="text"
@@ -579,10 +564,12 @@ export const RegimeCalculator: React.FC = () => {
                       <label className="block text-sm font-medium text-slate-300 mb-2">
                         Initial Investment (₹)
                       </label>
-                      <FormattedInput
-                        placeholder="e.g. 15,00,000"
+                      <Input
+                        type="number"
+                        placeholder="e.g. 1500000"
                         value={capitalInitialInvestment}
-                        onChange={(val: string) => setCapitalInitialInvestment(val)}
+                        onChange={(e) => setCapitalInitialInvestment(e.target.value)}
+                        className="bg-slate-800 border-slate-700"
                       />
                       <p className="text-xs text-slate-500 mt-1">
                         Capital outlay before cash inflows start
@@ -653,22 +640,7 @@ export const RegimeCalculator: React.FC = () => {
         </div>
 
         {/* Right Panel - Results */}
-        {loading && (
-          <div className="flex-1 space-y-4 animate-in slide-in-from-right-12 fade-in duration-300">
-            <div className="h-[100px] bg-slate-900 border border-slate-800 rounded-xl shadow-xl animate-pulse" />
-            <div className="grid grid-cols-2 gap-4">
-              <div className="h-[380px] bg-slate-900 border border-slate-800 rounded-xl shadow-lg animate-pulse delay-75" />
-              <div className="h-[380px] bg-slate-900 border border-slate-800 rounded-xl shadow-lg animate-pulse delay-100" />
-            </div>
-            <div className="grid flex-1 grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="h-[140px] bg-slate-900 border border-slate-800 rounded-xl animate-pulse delay-150" />
-              <div className="h-[140px] bg-slate-900 border border-slate-800 rounded-xl animate-pulse delay-200" />
-              <div className="h-[140px] bg-slate-900 border border-slate-800 rounded-xl animate-pulse delay-300" />
-            </div>
-          </div>
-        )}
-
-        {!loading && activeMode === 'regime' && result && (
+        {activeMode === 'regime' && result && (
           <div className="flex-1 space-y-4 animate-in slide-in-from-right-12 fade-in duration-300">
             {/* Verdict Banner */}
             <Card
@@ -770,34 +742,8 @@ export const RegimeCalculator: React.FC = () => {
               </Card>
             </div>
 
-            {/* Mini-Chart (Visual Breakdown) */}
-            <Card className="bg-slate-900 border-slate-700 overflow-hidden shadow-inner">
-              <CardContent className="pt-5 relative">
-                <p className="text-[11px] font-bold text-slate-400 mb-6 uppercase tracking-wider flex items-center justify-between">
-                  <span>Liability Comparison Chart</span>
-                  <span className="text-teal-400 opacity-60 font-mono tracking-tight">Visualized</span>
-                </p>
-                <div className="flex items-end gap-10 md:gap-16 h-24 px-4 md:px-8 border-b border-slate-800 pb-0">
-                  <div className="w-1/2 bg-amber-500/20 rounded-t border-t border-amber-500/50 relative group transition-all duration-[1500ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-amber-500/30" style={{ height: `${Math.max(10, (result.old_regime.total_tax / Math.max(result.old_regime.total_tax, result.new_regime.total_tax || 1)) * 100)}%` }}>
-                    <div className="absolute -top-7 left-0 right-0 text-center text-xs font-mono font-bold text-amber-500">
-                      {formatCurrency(result.old_regime.total_tax)}
-                    </div>
-                  </div>
-                  <div className="w-1/2 bg-emerald-500/20 rounded-t border-t border-emerald-500/50 relative group transition-all duration-[1500ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-emerald-500/30 delay-100" style={{ height: `${Math.max(10, (result.new_regime.total_tax / Math.max(result.old_regime.total_tax, result.new_regime.total_tax || 1)) * 100)}%` }}>
-                    <div className="absolute -top-7 left-0 right-0 text-center text-xs font-mono font-bold text-emerald-500">
-                      {formatCurrency(result.new_regime.total_tax)}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-between px-4 md:px-8 pt-3 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-                  <div className="w-1/2 text-center text-amber-500/80">Old Regime</div>
-                  <div className="w-1/2 text-center text-emerald-500/80">New Regime</div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Legal Footnote */}
-            <p className="text-[10px] md:text-xs text-slate-500 mt-6 leading-relaxed">
+            <p className="text-xs text-slate-500 mt-6">
               Computed using CBDT notified slabs for AY 2025-26. Includes 4%
               health & education cess. 87A rebate applied where applicable.
               <span className="text-teal-400 font-medium ml-1">§115BAC</span>
@@ -814,7 +760,7 @@ export const RegimeCalculator: React.FC = () => {
           </div>
         )}
 
-        {!loading && activeMode === 'capital' && capitalResult && (
+        {activeMode === 'capital' && capitalResult && (
           <div className="flex-1 space-y-4 animate-in slide-in-from-right-12 fade-in duration-300">
             <Card className="bg-slate-900 border-slate-700">
               <CardHeader>
