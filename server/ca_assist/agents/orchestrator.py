@@ -9,7 +9,8 @@ class Orchestrator:
         self.system_prompt = (
             "You are an intent classifier for a CA virtual assistant. "
             "Based on the user's query, return a JSON object with a single key 'intent'. "
-            "The value must be exactly one of: TAX_QUERY, GST_QUERY, DOCUMENT_UPLOAD, ADVISORY, REGIME_COMPARE. "
+            "The value must be exactly one of: TAX_QUERY, GST_QUERY, DOCUMENT_UPLOAD, ADVISORY, REGIME_COMPARE, "
+            "FOREX_VALUATION. "
             "Return only valid JSON."
         )
 
@@ -49,5 +50,8 @@ class Orchestrator:
         elif intent == Intent.ADVISORY:
             from agents.advisory_agent import AdvisoryAgent
             return AdvisoryAgent().handle(query)
+        elif intent == Intent.FOREX_VALUATION:
+            from agents.forex_agent import ForexAgent
+            return ForexAgent().handle(query)
 
         return {"answer": "Intent not supported yet.", "citations": []}

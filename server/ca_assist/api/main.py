@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from api.routes import query, document, regime, capital_budget, fund, auth
+from api.routes import query, document, regime, capital_budget, fund, auth, forex
 from database import init_db
 
 # Load environment variables first, before anything else
@@ -31,6 +31,7 @@ app.include_router(document.router, prefix="/document", tags=["Document"])
 app.include_router(regime.router, prefix="/regime", tags=["Regime Compare"])
 app.include_router(capital_budget.router, prefix="/capital-budget", tags=["Capital Budget"])
 app.include_router(fund.router, prefix="/fund", tags=["Fund Accounting"])
+app.include_router(forex.router, prefix="/forex", tags=["Forex Valuation"])
 
 @app.get("/health")
 def health_check():
