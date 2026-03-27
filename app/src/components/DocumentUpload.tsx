@@ -12,6 +12,7 @@ import {
   FileJson,
   BookOpen,
   Zap,
+  ChevronDown,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
@@ -35,7 +36,7 @@ interface ProcessingStep {
 }
 
 export const DocumentUpload: React.FC = () => {
-  const { userId } = useAppStore();
+  const { userId, setActiveTab, setDocumentExtractedData, addUserDocument, userDocuments, removeUserDocument } = useAppStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -60,6 +61,7 @@ export const DocumentUpload: React.FC = () => {
       source: string;
     }>
   >([]);
+  const [showDocumentHistory, setShowDocumentHistory] = useState(false);
 
   const validateFile = (f: File): string | null => {
     const allowedTypes = [
@@ -136,24 +138,48 @@ export const DocumentUpload: React.FC = () => {
       // Use the document info from response
       const docInfo = response.document;
       const ingestInfo = response.ingest_result;
+      const backendExtractedData = response.extracted_data || {};
+      const backendDocumentType = response.document_type || 'document';
 
-      // Set success state
+      // Set success state with actual extracted data
       setExtractedData({
         filename: docInfo.original_filename,
         file_size: docInfo.file_size,
         chunks_added: ingestInfo.chunks_added,
         upload_status: 'success',
+        ...backendExtractedData,
       });
 
-      // Determine document type based on filename
-      const filename = docInfo.original_filename.toLowerCase();
-      if (filename.includes('salary') || filename.includes('slip')) {
-        setDocumentType('salary_slip');
-      } else if (filename.includes('form') || filename.includes('16')) {
-        setDocumentType('form16');
-      } else {
-        setDocumentType('invoice');
-      }
+      // Add to user documents list with extracted data
+      const newDoc = {
+        id: docInfo.id || `doc-${Date.now()}`,
+        filename: docInfo.original_filename,
+        documentType: (backendDocumentType === 'salary_slip'
+          ? 'salary_slip'
+          : backendDocumentType === 'form16'
+            ? 'form16'
+            : 'invoice') as any,
+        uploadedAt: new Date(docInfo.uploaded_at || new Date()),
+        fileSize: docInfo.file_size,
+        extractedData: {
+          gross_salary: backendExtractedData?.gross_salary,
+          tds_deducted: backendExtractedData?.tds_deducted,
+          pf: backendExtractedData?.pf,
+          pan: backendExtractedData?.pan,
+          gstin: backendExtractedData?.gstin,
+          ...backendExtractedData,
+        },
+      };
+      addUserDocument(newDoc);
+
+      // Set document type
+      setDocumentType(
+        backendDocumentType === 'salary_slip'
+          ? 'salary_slip'
+          : backendDocumentType === 'form16'
+            ? 'form16'
+            : 'invoice'
+      );
 
       // Generate insights based on upload
       const sampleInsights = [
@@ -438,12 +464,12 @@ export const DocumentUpload: React.FC = () => {
 
               <div className="mt-6 pt-6 border-t border-slate-700">
                 <Button
-                  variant="secondary"
+                  variant="primary"
                   className="w-full"
                   onClick={() => {
-                    // This would navigate to RegimeCalculator and pre-fill
-                    // For now, just show a message
-                    console.log('Navigate to calculator with values:', extractedData);
+                    // Pass extracted data to regime calculator
+                    setDocumentExtractedData(extractedData || {});
+                    setActiveTab('regime');
                   }}
                 >
                   <Zap size={16} className="mr-2" />
@@ -537,6 +563,106 @@ export const DocumentUpload: React.FC = () => {
             Upload Another Document
           </Button>
         )}
+
+        {/* Document History Section */}
+        <Card className="bg-slate-900 border-slate-700">
+          <CardHeader>
+            <button
+              onClick={() => setShowDocumentHistory(!showDocumentHistory)}
+              className="w-full flex items-center justify-between hover:opacity-80 transition-opacity"
+            >
+              <div className="flex items-center gap-2">
+                <CardTitle>Your Uploaded Documents</CardTitle>
+                <div className="inline-flex items-center gap-1 bg-slate-800 text-slate-300 border border-slate-700 rounded-full px-2.5 py-0.5 text-xs font-medium">
+                  {userDocuments.length}
+                </div>
+              </div>
+              <ChevronDown
+                size={20}
+                className={cn('transition-transform', showDocumentHistory && 'rotate-180')}
+              />
+            </button>
+          </CardHeader>
+
+          {showDocumentHistory && (
+            <CardContent>
+              {userDocuments.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText size={48} className="mx-auto mb-4 text-slate-500" />
+                  <p className="text-slate-400 mb-2">No documents uploaded yet</p>
+                  <p className="text-sm text-slate-500">Upload your first document to get started</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {userDocuments.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between p-4 bg-slate-800 border border-slate-700 rounded-lg hover:border-slate-600 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <FileText size={18} className="text-teal-400 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-slate-100 truncate">
+                              {doc.filename}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="text-xs text-slate-400">
+                                {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
+                              </span>
+                              <span className="text-xs text-slate-500">•</span>
+                              <span className="text-xs text-slate-400">
+                                {new Date(doc.uploadedAt).toLocaleDateString('en-IN')}
+                              </span>
+                              {doc.documentType && (
+                                <>
+                                  <span className="text-xs text-slate-500">•</span>
+                                  <span className="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">
+                                    {doc.documentType === 'salary_slip'
+                                      ? 'Salary Slip'
+                                      : doc.documentType === 'form16'
+                                        ? 'Form 16'
+                                        : 'Invoice'}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 ml-4">
+                        {doc.extractedData && Object.keys(doc.extractedData).length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              setDocumentExtractedData(doc.extractedData || {});
+                              setActiveTab('regime');
+                            }}
+                            title="Use this document's data in Regime Calculator"
+                          >
+                            <Zap size={14} />
+                            Use
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeUserDocument(doc.id)}
+                          className="text-red-400 hover:text-red-300"
+                          title="Delete this document"
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          )}
+        </Card>
       </div>
     </div>
   );
