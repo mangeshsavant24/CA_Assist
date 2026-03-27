@@ -78,6 +78,8 @@ export const useAppStore = create<AppStore>((set) => ({
     
     // FIXED: Set isAuthenticated flag based on whether token was restored
     set({ sessionId, userId, accessToken: storedToken || null, isAuthenticated: !!storedToken })
+    // FIXED: Set isAuthenticated flag based on whether token was restored
+    set({ sessionId, userId, accessToken: storedToken || null, isAuthenticated: !!storedToken })
   },
   
   // Authentication
