@@ -63,9 +63,22 @@ def upload_document(
         db.refresh(user_doc)
         
         # Process document for advisory (existing logic)
+        extracted_data = None
+        document_type = None
         try:
             doc_agent = DocumentAgent()
             extracted_data = doc_agent.handle(file_path)
+            
+            # Detect document type from filename
+            filename_lower = file.filename.lower()
+            if 'salary' in filename_lower or 'slip' in filename_lower:
+                document_type = 'salary_slip'
+            elif 'form' in filename_lower or '16' in filename_lower:
+                document_type = 'form16'
+            elif 'invoice' in filename_lower or 'bill' in filename_lower:
+                document_type = 'invoice'
+            else:
+                document_type = 'document'
             
             advisory_agent = AdvisoryAgent()
             advisory = advisory_agent.handle(
@@ -79,7 +92,9 @@ def upload_document(
         
         return DocumentUploadResponse(
             document=user_doc,
-            ingest_result=ingest_result
+            ingest_result=ingest_result,
+            extracted_data=extracted_data,
+            document_type=document_type
         )
         
     except Exception as e:

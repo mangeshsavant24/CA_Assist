@@ -33,3 +33,5 @@ class DocumentUploadResponse(BaseModel):
     """Complete response from document upload"""
     document: UserDocumentResponse
     ingest_result: DocumentIngestResult
+    extracted_data: Optional[dict] = None
+    document_type: Optional[str] = None

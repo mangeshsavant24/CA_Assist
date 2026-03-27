@@ -1,5 +1,8 @@
 import { useAppStore } from '@/store/appStore'
-import { MessageSquare, TrendingUp, Upload, PieChart } from 'lucide-react'
+import { 
+  MessageSquare, TrendingUp, Upload, PieChart,
+  DollarSign, Package, TrendingDown, GitBranch, FileCheck
+} from 'lucide-react'
 
 export default function Sidebar() {
   const { activeTab, setActiveTab } = useAppStore()
@@ -10,6 +13,12 @@ export default function Sidebar() {
     { id: 'regime', label: 'Regime Calculator', icon: TrendingUp },
     { id: 'fund', label: 'Fund Accounting', icon: PieChart },
     { id: 'document', label: 'Document Upload', icon: Upload },
+    // New Feature Tabs
+    { id: 'forex', label: 'Forex Valuation', icon: DollarSign },
+    { id: 'inventory', label: 'Inventory Valuation', icon: Package },
+    { id: 'costing', label: 'Costing & Forecast', icon: TrendingDown },
+    { id: 'make-or-buy', label: 'Make or Buy', icon: GitBranch },
+    { id: 'audit', label: 'Financial Audit', icon: FileCheck },
   ]
 
   return (

@@ -35,6 +35,32 @@ apiClient.interceptors.response.use(
   }
 )
 
+// Auth Interfaces
+export interface UserRegister {
+  email: string
+  password: string
+  full_name?: string
+}
+
+export interface UserLogin {
+  username: string // email
+  password: string
+}
+
+export interface AuthToken {
+  access_token: string
+  token_type: string
+  expires_in: number
+}
+
+export interface UserResponse {
+  id: string
+  email: string
+  full_name?: string
+  created_at: string
+}
+
+// Query Interfaces
 export interface QueryRequest {
   query: string
   user_id: string
@@ -186,6 +212,17 @@ export const uploadDocumentAPI = async (file: File, userId: string): Promise<any
 
 export const getHealthAPI = async () => {
   const response = await apiClient.get('/health')
+  return response.data
+}
+
+// Auth APIs
+export const registerAPI = async (data: UserRegister): Promise<UserResponse> => {
+  const response = await apiClient.post<UserResponse>('/auth/register', data)
+  return response.data
+}
+
+export const loginAPI = async (credentials: UserLogin): Promise<AuthToken> => {
+  const response = await apiClient.post<AuthToken>('/auth/login', credentials)
   return response.data
 }
 

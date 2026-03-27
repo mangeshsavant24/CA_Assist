@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Citation } from '@/lib/api'
 
-export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund'
+export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund' | 'forex' | 'inventory' | 'costing' | 'make-or-buy' | 'audit'
 
 export interface Message {
   id: string
@@ -10,6 +10,15 @@ export interface Message {
   citations?: Citation[] | string[]
   agent?: 'TAX_QUERY' | 'GST_QUERY' | 'ADVISORY' | 'DOCUMENT_ANALYSIS'
   timestamp: Date
+}
+
+export interface UploadedDocument {
+  id: string
+  filename: string
+  documentType: 'salary_slip' | 'form16' | 'invoice' | unknown
+  uploadedAt: Date
+  fileSize: number
+  extractedData?: Record<string, any>
 }
 
 interface AppStore {
@@ -32,6 +41,13 @@ interface AppStore {
   setAccessToken: (token: string | null) => void
   isAuthenticated: boolean
   logout: () => void
+  
+  // Document Management
+  userDocuments: UploadedDocument[]
+  addUserDocument: (doc: UploadedDocument) => void
+  removeUserDocument: (docId: string) => void
+  documentExtractedData: Record<string, any> | null
+  setDocumentExtractedData: (data: Record<string, any> | null) => void
   
   // Loading states
   isLoading: boolean
@@ -68,10 +84,11 @@ export const useAppStore = create<AppStore>((set) => ({
   setAccessToken: (token) => {
     if (token) {
       localStorage.setItem('accessToken', token)
+      set({ accessToken: token, isAuthenticated: true })
     } else {
       localStorage.removeItem('accessToken')
+      set({ accessToken: null, isAuthenticated: false })
     }
-    set({ accessToken: token })
   },
   isAuthenticated: false,
   logout: () => {
@@ -79,9 +96,23 @@ export const useAppStore = create<AppStore>((set) => ({
     set({ 
       accessToken: null, 
       isAuthenticated: false,
-      chatHistory: []
+      chatHistory: [],
+      activeTab: 'home',
+      userDocuments: [],
+      documentExtractedData: null
     })
   },
+  
+  // Document Management
+  userDocuments: [],
+  addUserDocument: (doc) => set((state) => ({
+    userDocuments: [...state.userDocuments, doc],
+  })),
+  removeUserDocument: (docId) => set((state) => ({
+    userDocuments: state.userDocuments.filter((doc) => doc.id !== docId),
+  })),
+  documentExtractedData: null,
+  setDocumentExtractedData: (data) => set({ documentExtractedData: data }),
   
   // Loading
   isLoading: false,

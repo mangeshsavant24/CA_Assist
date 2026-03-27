@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calculator,
   ChevronDown,
@@ -6,6 +6,8 @@ import {
   CheckCircle2,
   Info,
   TrendingDown,
+  FileText,
+  X,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
@@ -13,6 +15,7 @@ import { Input } from './ui/Input';
 import { compareRegimeAPI, evaluateCapitalBudgetAPI } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 import { cn } from '../lib/utils';
+import { useAppStore } from '../store/appStore';
 
 interface CapitalBudgetOutput {
   project_name?: string;
@@ -196,7 +199,9 @@ const RegimeCard = ({
 };
 
 export const RegimeCalculator: React.FC = () => {
+  const { documentExtractedData, setDocumentExtractedData } = useAppStore();
   const [activeMode, setActiveMode] = useState<'regime' | 'capital'>('regime');
+  const [documentUsed, setDocumentUsed] = useState(false);
 
   const [grossIncome, setGrossIncome] = useState('');
   const [sec80c, setSec80c] = useState('');
@@ -215,6 +220,26 @@ export const RegimeCalculator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  // Pre-fill form with extracted document data
+  useEffect(() => {
+    if (documentExtractedData && !documentUsed) {
+      const data = documentExtractedData;
+      
+      // Map extracted fields to form fields
+      if (data.gross_salary) {
+        setGrossIncome(String(data.gross_salary));
+      }
+      if (data.tds_deducted) {
+        setOtherDeductions(String(data.tds_deducted));
+      }
+      if (data.pf) {
+        setSec80c(String(data.pf));
+      }
+      
+      setDocumentUsed(true);
+    }
+  }, [documentExtractedData, documentUsed]);
 
   const handleCalculate = async () => {
     if (!grossIncome) {
@@ -257,6 +282,8 @@ export const RegimeCalculator: React.FC = () => {
     setCapitalCashFlows('');
     setCapitalDiscountRate('');
     setCapitalCurrency('INR');
+    setDocumentUsed(false);
+    setDocumentExtractedData(null);
   };
 
   const handleCapitalCalculate = async () => {
@@ -334,6 +361,30 @@ export const RegimeCalculator: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Document Data Banner */}
+      {documentUsed && documentExtractedData && (
+        <div className="max-w-5xl mx-auto mb-4">
+          <div className="bg-violet-950/50 border border-violet-700 rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FileText size={20} className="text-violet-400" />
+              <div>
+                <p className="font-semibold text-slate-100">Document Data Imported</p>
+                <p className="text-sm text-slate-300">Values extracted from your uploaded document are pre-filled above</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setDocumentUsed(false);
+                setDocumentExtractedData(null);
+              }}
+              className="text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+      )}
       <div className="max-w-5xl mx-auto flex gap-6">
         {/* Left Panel - Input */}
         <div className="w-96 flex-shrink-0">

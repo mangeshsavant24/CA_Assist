@@ -6,7 +6,6 @@ class CapitalBudgetingEngine:
         npv = -request.initial_investment
         pv_cash_flows = 0.0
         cumulative = 0.0
-
         for t, cf in enumerate(request.cash_flows, start=1):
             pv = cf / ((1 + r) ** t)
             pv_cash_flows += pv
