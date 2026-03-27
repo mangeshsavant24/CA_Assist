@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Citation } from '@/lib/api'
 
-export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund'
+export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund' | 'forex' | 'inventory' | 'costing' | 'make-or-buy' | 'audit'
 
 export interface Message {
   id: string
@@ -76,7 +76,8 @@ export const useAppStore = create<AppStore>((set) => ({
     // Try to load token from localStorage
     const storedToken = localStorage.getItem('accessToken')
     
-    set({ sessionId, userId, accessToken: storedToken || null })
+    // FIXED: Set isAuthenticated flag based on whether token was restored
+    set({ sessionId, userId, accessToken: storedToken || null, isAuthenticated: !!storedToken })
   },
   
   // Authentication
