@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 1%;
+    --foreground: 0 0% 98%;
+    --card: 217 33% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 217 33% 6%;
+    --popover-foreground: 0 0% 98%;
+    --muted: 215 16% 26%;
+    --muted-foreground: 215 13% 74%;
+    --accent: 0 0% 100%;
+    --accent-foreground: 0 0% 3%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 217 33% 21%;
+    --input: 217 33% 12%;
+    --ring: 20 91% 39%;
+    --radius: 0.75rem;
+  }
+
+  body {
+    @apply bg-slate-950 text-slate-50 font-sans;
+  }
+
+  /* Remove spinner from number inputs */
+  input::-webkit-inner-spin-button,
+  input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  /* Custom card styles */
+  .card-base {
+    @apply bg-slate-900 border border-slate-700 rounded-xl shadow-lg;
+  }
+
+  .card-hover {
+    @apply card-base transition-all duration-200 hover:border-slate-600 hover:shadow-xl;
+  }
+
+  /* Custom input styles */
+  .input-base {
+    @apply bg-slate-800 border border-slate-700 text-slate-50 placeholder-slate-500;
+    @apply focus:ring-2 focus:ring-teal-500 focus:border-transparent rounded-lg;
+    @apply transition-all duration-200;
+  }
+
+  .input-base:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* Custom button styles */
+  .btn-primary {
+    @apply bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg;
+    @apply transition-all duration-200 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-slate-800 hover:bg-slate-700 text-slate-50 font-medium rounded-lg;
+    @apply border border-slate-700 transition-all duration-200;
+  }
+
+  .btn-ghost {
+    @apply text-slate-400 hover:text-slate-50 hover:bg-slate-800/50;
+    @apply transition-all duration-200;
+  }
+
+  /* Currency/Amount styling */
+  .amount {
+    @apply text-teal-400 font-mono font-semibold;
+  }
+
+  /* Citation styling */
+  .citation-badge {
+    @apply inline-block bg-teal-500/10 border border-teal-500/30 text-teal-400;
+    @apply px-2 py-1 rounded text-xs font-mono;
+  }
+
+  /* Success/Error states */
+  .state-success {
+    @apply text-emerald-500;
+  }
+
+  .state-error {
+    @apply text-red-500;
+  }
+
+  .state-warning {
+    @apply text-amber-400;
+  }
+
+  /* Animation utilities */
+  @keyframes slow-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .animate-slow-pulse {
+    animation: slow-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(71 85 105 / 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(71 85 105 / 0.8);
+}

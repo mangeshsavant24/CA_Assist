@@ -1,0 +1,27 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.0.1, pluggy-1.6.0
+rootdir: C:\Users\mitsa\Downloads\CA_assis\ca_assist
+plugins: anyio-4.9.0, dash-3.2.0, langsmith-0.4.8
+collected 7 items
+
+tests\test_citation_engine.py .                                          [ 14%]
+tests\test_regime_engine.py .F....                                       [100%]
+
+================================== FAILURES ===================================
+___________________ test_income_750k_old_regime_saves_more ____________________
+
+    def test_income_750k_old_regime_saves_more():
+        # 2. Income \u20b97,50,000 \u2192 old regime saves more (high deductions)
+        engine = RegimeEngine()
+        req = RegimeInput(gross_income=750000, sec_80c=150000, sec_80d=25000, hra_exemption=50000)
+        res = engine.compare(req)
+>       assert res.verdict.recommended_regime == "Old Regime"
+E       AssertionError: assert 'Either Regime' == 'Old Regime'
+E         
+E         - Old Regime
+E         + Either Regime
+
+tests\test_regime_engine.py:19: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_regime_engine.py::test_income_750k_old_regime_saves_more - ...
+========================= 1 failed, 6 passed in 0.40s =========================
