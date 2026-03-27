@@ -1,75 +1,64 @@
-from api.schemas import ForexValuationInput, ForexValuationOutput
+import json
+from api.schemas import ForexValuationInput, ForexValuationOutput, ForexExposureResult
+from langchain_core.messages import SystemMessage, HumanMessage
 
-
-class ForexValuationEngine:
-    """Engine for foreign exchange valuation and treatment analysis."""
-
-    def evaluate(self, request: ForexValuationInput) -> ForexValuationOutput:
-        """
-        Valuate forex exposure using specified method.
-        Supports Current Rate, Covering Rate, and Average Rate methods.
-        """
-        # Calculate total exposure in INR
-        total_exposure_inr = sum(exp.amount for exp in request.exposures)
-
-        # Calculate forex gain/loss (simplified)
-        forex_gain_loss = self._calculate_forex_impact(request.exposures)
-
-        # Determine tax treatment
-        treatment = self._determine_tax_treatment(
-            request.valuation_method, forex_gain_loss
-        )
-
-        # Generate recommendation
-        recommendation = self._generate_recommendation(
-            forex_gain_loss, treatment, request.valuation_method
-        )
-
-        return ForexValuationOutput(
-            exposure_date=request.exposure_date,
-            total_exposure_inr=round(total_exposure_inr, 2),
-            valuation_method=request.valuation_method,
-            forex_gain_loss=round(forex_gain_loss, 2),
-            treatment=treatment,
-            recommendation=recommendation,
-            currency=request.currency,
-        )
-
-    def _calculate_forex_impact(self, exposures) -> float:
-        """Calculate realized/unrealized forex gain or loss."""
-        impact = 0.0
-        for exp in exposures:
-            if exp.transaction_rate:
-                # Simplified: difference between amounts
-                impact += exp.amount * 0.02  # Assume 2% fluctuation
-        return impact
-
-    def _determine_tax_treatment(self, method: str, gain_loss: float) -> str:
-        """Determine tax treatment based on method and amount."""
-        if gain_loss > 0:
-            if method == "Current Rate":
-                return "Taxable as capital gain (Section 45)"
-            elif method == "Covering Rate":
-                return "Taxable under business income"
+class ForexEngine:
+    def evaluate_valuation(self, input_data: ForexValuationInput) -> ForexValuationOutput:
+        results = []
+        total_initial_value = 0.0
+        total_current_value = 0.0
+        net_gain_loss = 0.0
+        
+        for exp in input_data.exposures:
+            initial_base_value = exp.foreign_amount * exp.initial_rate
+            current_base_value = exp.foreign_amount * exp.current_rate
+            
+            if exp.exposure_type == 'Receivable':
+                gain_loss = current_base_value - initial_base_value
+            elif exp.exposure_type == 'Payable':
+                gain_loss = initial_base_value - current_base_value
             else:
-                return "Taxable under relevant income head"
+                gain_loss = 0.0
+                
+            status = 'Neutral'
+            if gain_loss > 0:
+                status = 'Gain'
+            elif gain_loss < 0:
+                status = 'Loss'
+                
+            total_initial_value += initial_base_value
+            total_current_value += current_base_value
+            net_gain_loss += gain_loss
+            
+            # Format and append
+            results.append(ForexExposureResult(
+                id=exp.id,
+                currency_pair=exp.currency_pair,
+                exposure_type=exp.exposure_type,
+                foreign_amount=exp.foreign_amount,
+                initial_base_value=initial_base_value,
+                current_base_value=current_base_value,
+                gain_loss=gain_loss,
+                status=status,
+                description=exp.description
+            ))
+            
+        recommendation = ""
+        if net_gain_loss > 0:
+            recommendation = (f"The portfolio shows a net unrealized Forex Gain of {net_gain_loss:,.2f} {input_data.base_currency}. "
+                              "This will increase reported profit, but is subject to taxation depending on local accounting standards (e.g., AS-11/Ind AS 21).")
+        elif net_gain_loss < 0:
+            recommendation = (f"The portfolio shows a net unrealized Forex Loss of {abs(net_gain_loss):,.2f} {input_data.base_currency}. "
+                              "Consider hedging strategies such as forward contracts or options for volatile currency pairs to mitigate further downside risk.")
         else:
-            return "Loss allowable under relevant section"
-
-    def _generate_recommendation(self, gain_loss: float, treatment: str, method: str) -> str:
-        """Generate recommendation for forex management."""
-        if abs(gain_loss) < 100000:
-            return (
-                f"Exposure is modest ({treatment}). "
-                "Consider hedging if exposure increases significantly."
-            )
-        elif gain_loss > 0:
-            return (
-                f"Significant {treatment}. "
-                "Recommend documenting hedging strategies and maintaining transfer pricing compliance."
-            )
-        else:
-            return (
-                f"Loss recognized ({treatment}). "
-                "Maintain documentation for CIT exemptions if applicable under Section 118."
-            )
+            recommendation = "The portfolio is perfectly hedged or has no net movement in currency valuations."
+            
+        return ForexValuationOutput(
+            valuation_date=input_data.valuation_date,
+            base_currency=input_data.base_currency,
+            total_initial_value=total_initial_value,
+            total_current_value=total_current_value,
+            net_gain_loss=net_gain_loss,
+            results=results,
+            recommendation=recommendation
+        )

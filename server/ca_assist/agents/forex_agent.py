@@ -1,35 +1,31 @@
+import json
 from agents import get_llm
-from rag.retriever import fetch_relevant_docs
-from engines.citation_engine import CitationEngine
 from langchain_core.messages import SystemMessage, HumanMessage
-
+from api.schemas import CitedResponse, Citation
 
 class ForexAgent:
-    """Agent for forex valuation and hedging strategy queries."""
-
     def __init__(self):
         self.llm = get_llm()
-        self.citation_engine = CitationEngine()
         self.system_prompt = (
-            "You are a forex valuation agent. Handle queries about foreign exchange exposure valuation, "
-            "hedging strategies, spot rates, forward premiums, and tax treatment of forex gains/losses. "
-            "Cite relevant sections of I.T. Act (Section 43, 45, 48) and accounting standards (AS-11, IND-AS 21). "
-            "Provide practical guidance on forex risk management for businesses and exporters."
+            "You are an expert Chartered Accountant specializing in Forex Valuation (AS-11 / Ind AS 21 / IFRS 9). "
+            "Address the user's queries about foreign exchange, hedging options, recognizing gain/loss, translation of financial statements, and compliance. "
+            "Keep the response concise and accurate."
         )
 
-    def handle(self, query: str, context_data: dict = None):
-        """Process forex-related query."""
-        docs = fetch_relevant_docs(f"forex valuation hedging {query}")
-        context = "\n\n".join([doc.page_content for doc in docs])
-
-        prompt = f"Context:\n{context}\n\nQuery:\n{query}"
-        if context_data:
-            prompt += f"\n\nFinancial Data:\n{context_data}"
-
+    def handle(self, query: str) -> CitedResponse:
         messages = [
             SystemMessage(content=self.system_prompt),
-            HumanMessage(content=prompt),
+            HumanMessage(content=query)
         ]
 
-        res = self.llm.invoke(messages)
-        return self.citation_engine.attach_citations(res.content, docs)
+        try:
+            response = self.llm.invoke(messages)
+            content = response.content
+            
+            return CitedResponse(
+                answer=content,
+                citations=[Citation(source="Accounting Standard 11", section="Effects of Changes in Foreign Exchange Rates", act="Companies Act", url=None)]
+            )
+        except Exception as e:
+            print(f"ForexAgent error: {e}")
+            return CitedResponse(answer="I'm unable to answer your query about Forex valuation at this moment.", citations=[])

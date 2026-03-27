@@ -9,10 +9,6 @@ import { HomeScreen } from './components/HomeScreen'
 import { AuthModal } from './components/AuthModal'
 // Import new pages
 import ForexValuationPage from './pages/ForexValuationPage'
-import InventoryValuationPage from './pages/InventoryValuationPage'
-import CostingForecastingPage from './pages/CostingForecastingPage'
-import MakeOrBuyPage from './pages/MakeOrBuyPage'
-import AuditPage from './pages/AuditPage'
 import { Moon, Sun, LogOut } from 'lucide-react'
 import { Button } from './components/ui/Button'
 
@@ -45,14 +41,6 @@ function App() {
         return 'Document Upload'
       case 'forex':
         return 'Forex Valuation'
-      case 'inventory':
-        return 'Inventory Valuation'
-      case 'costing':
-        return 'Costing & Forecasting'
-      case 'make-or-buy':
-        return 'Make or Buy Decision'
-      case 'audit':
-        return 'Financial Audit'
       default:
         return 'Dashboard'
     }
@@ -90,12 +78,7 @@ function App() {
               {activeTab === 'regime' && <RegimeCalculator />}
               {activeTab === 'document' && <DocumentUpload />}
               {activeTab === 'fund' && <FundAccounting />}
-              {/* New Features */}
               {activeTab === 'forex' && <ForexValuationPage />}
-              {activeTab === 'inventory' && <InventoryValuationPage />}
-              {activeTab === 'costing' && <CostingForecastingPage />}
-              {activeTab === 'make-or-buy' && <MakeOrBuyPage />}
-              {activeTab === 'audit' && <AuditPage />}
             </>
           ) : (
             activeTab !== 'home' && (

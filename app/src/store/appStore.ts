@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Citation } from '@/lib/api'
 
-export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund' | 'forex' | 'inventory' | 'costing' | 'make-or-buy' | 'audit'
+export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund' | 'forex'
 
 export interface Message {
   id: string

@@ -1,16 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from api.schemas import ForexValuationInput, ForexValuationOutput
-from api.dependencies import get_current_user
-from models import User
-from engines.forex_engine import ForexValuationEngine
+from engines.forex_engine import ForexEngine
 
 router = APIRouter()
-engine = ForexValuationEngine()
+engine = ForexEngine()
 
-
-@router.post("/valuate", response_model=ForexValuationOutput)
-def valuate_forex(
-    request: ForexValuationInput, current_user: User = Depends(get_current_user)
-):
-    """Valuate foreign exchange exposure."""
-    return engine.evaluate(request)
+@router.post("/evaluate", response_model=ForexValuationOutput)
+def evaluate_forex(input_data: ForexValuationInput):
+    """
+    Evaluates Forex Exposures
+    """
+    return engine.evaluate_valuation(input_data)

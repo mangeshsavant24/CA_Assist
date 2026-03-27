@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 import os
 import warnings
 from dotenv import load_dotenv
-
+from passlib.context import CryptContext
 load_dotenv()
 
 # FIXED: Suppress bcrypt version warning (bcrypt 4.x removed __about__ module)

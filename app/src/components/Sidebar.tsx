@@ -1,7 +1,7 @@
 import { useAppStore } from '@/store/appStore'
 import { 
   MessageSquare, TrendingUp, Upload, PieChart,
-  DollarSign, Package, TrendingDown, GitBranch, FileCheck
+  DollarSign
 } from 'lucide-react'
 
 export default function Sidebar() {
@@ -15,10 +15,6 @@ export default function Sidebar() {
     { id: 'document', label: 'Document Upload', icon: Upload },
     // New Feature Tabs
     { id: 'forex', label: 'Forex Valuation', icon: DollarSign },
-    { id: 'inventory', label: 'Inventory Valuation', icon: Package },
-    { id: 'costing', label: 'Costing & Forecast', icon: TrendingDown },
-    { id: 'make-or-buy', label: 'Make or Buy', icon: GitBranch },
-    { id: 'audit', label: 'Financial Audit', icon: FileCheck },
   ]
 
   return (
