@@ -19,6 +19,7 @@ import { Button } from './ui/Button';
 import { uploadDocumentAPI } from '../lib/api';
 import { formatCurrency, cn } from '../lib/utils';
 import { useAppStore } from '../store/appStore';
+import { DocumentList } from './DocumentList';
 
 interface ExtractedData {
   gross_salary?: number;

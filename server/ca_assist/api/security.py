@@ -3,14 +3,21 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 import os
+import warnings
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# FIXED: Suppress bcrypt version warning (bcrypt 4.x removed __about__ module)
+warnings.filterwarnings(
+    "ignore",
+    message=".*error reading bcrypt version.*"
+)
+
 # Password hashing
-# Use argon2 as primary (more secure) with bcrypt as fallback
+# FIXED: Use bcrypt only (argon2_cffi not installed, bcrypt is stable and available)
 pwd_context = CryptContext(
-    schemes=["argon2", "bcrypt"],
+    schemes=["bcrypt"],
     deprecated="auto"
 )
 
