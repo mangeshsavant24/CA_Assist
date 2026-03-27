@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 from api.routes import query, document, regime, capital_budget, fund, auth
 from database import init_db
+
+# Load environment variables first, before anything else
+load_dotenv()
 
 app = FastAPI(title="CA-Assist API", version="1.0.0")
 

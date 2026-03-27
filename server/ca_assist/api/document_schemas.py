@@ -29,9 +29,23 @@ class DocumentIngestResult(BaseModel):
     error: Optional[str] = None
 
 
+class ExtractedDataResponse(BaseModel):
+    """Extracted financial data from document"""
+    gross_salary: Optional[float] = None
+    tds_deducted: Optional[float] = None
+    pf: Optional[float] = None
+    pan: Optional[str] = None
+    gstin: Optional[str] = None
+    document_type: str = "unknown"
+    is_relevant_for_regime: bool = False
+    relevance_reason: Optional[str] = None
+
+
 class DocumentUploadResponse(BaseModel):
     """Complete response from document upload"""
     document: UserDocumentResponse
     ingest_result: DocumentIngestResult
-    extracted_data: Optional[dict] = None
+    extracted_data: Optional[ExtractedDataResponse] = None
     document_type: Optional[str] = None
+    error: Optional[str] = None  # Error message if extraction failed
+
