@@ -28,7 +28,7 @@ def get_llm():
     Environment variables:
     - LLM_PROVIDER: 'ollama' or 'openai' (default: 'ollama')
     - OLLAMA_BASE_URL: Ollama server URL (default: http://localhost:11434)
-    - OLLAMA_MODEL: Model name to use (default: 'llama2')  
+    - OLLAMA_MODEL: Model name to use (default: 'mistral')  
     - OPENAI_API_KEY: OpenAI API key
     - OPENAI_MODEL: OpenAI model (default: 'gpt-3.5-turbo')
     - LLM_TEMPERATURE: Model temperature (default: 0.1)
@@ -67,7 +67,7 @@ def _get_ollama_llm(temperature: float):
         raise ImportError("langchain-ollama is not installed")
     
     base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    model = os.getenv("OLLAMA_MODEL", "llama2")
+    model = os.getenv("OLLAMA_MODEL", "mistral")
     
     # Validate connection and model availability
     import requests
@@ -78,7 +78,7 @@ def _get_ollama_llm(temperature: float):
         
         available_models = [m["name"].split(":")[0] for m in response.json().get("models", [])]
         if not available_models:
-            raise RuntimeError("No models available in Ollama. Install a model with: ollama pull llama2")
+            raise RuntimeError("No models available in Ollama. Install a model with: ollama pull mistral")
         
         if model not in available_models:
             warnings.warn(
