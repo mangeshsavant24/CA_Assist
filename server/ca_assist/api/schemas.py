@@ -86,7 +86,7 @@ class UserPublic(BaseModel):
     created_at: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Intent(str, Enum):
@@ -95,6 +95,7 @@ class Intent(str, Enum):
     DOCUMENT_UPLOAD = "DOCUMENT_UPLOAD"
     ADVISORY = "ADVISORY"
     REGIME_COMPARE = "REGIME_COMPARE"
+    FOREX_VALUATION = "FOREX_VALUATION"
 
 
 class FundTransaction(BaseModel):
@@ -132,3 +133,39 @@ class FundOutput(BaseModel):
     nav_detail: NAVDetail
     recommendation: str
     currency: Literal['INR', 'USD']
+
+
+# ===== FOREX VALUATION SCHEMAS =====
+class ForexExposure(BaseModel):
+    id: str
+    currency_pair: str
+    exposure_type: Literal['Receivable', 'Payable']
+    foreign_amount: float
+    initial_rate: float
+    current_rate: float
+    description: Optional[str] = None
+
+class ForexValuationInput(BaseModel):
+    valuation_date: str
+    base_currency: str = "INR"
+    exposures: List[ForexExposure]
+
+class ForexExposureResult(BaseModel):
+    id: str
+    currency_pair: str
+    exposure_type: str
+    foreign_amount: float
+    initial_base_value: float
+    current_base_value: float
+    gain_loss: float
+    status: Literal['Gain', 'Loss', 'Neutral']
+    description: Optional[str]
+
+class ForexValuationOutput(BaseModel):
+    valuation_date: str
+    base_currency: str
+    total_initial_value: float
+    total_current_value: float
+    net_gain_loss: float
+    results: List[ForexExposureResult]
+    recommendation: str

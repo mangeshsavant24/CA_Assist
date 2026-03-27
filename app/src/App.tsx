@@ -47,7 +47,7 @@ function App() {
 
   return (
     <div className="relative flex flex-col h-screen w-full overflow-hidden bg-[#050505] text-slate-50 font-sans selection:bg-[#10b981]/30">
-      
+
       {/* Background gradients for premium glowing feel */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#10b981]/10 blur-[120px]" />
@@ -59,7 +59,7 @@ function App() {
       {/* Floating Pill Navbar */}
       <header className="relative z-30 mx-4 lg:mx-auto lg:max-w-5xl mt-6 rounded-full bg-black/40 backdrop-blur-2xl border border-white/5 p-2 shadow-[0_8px_40px_-12px_rgba(16,185,129,0.2)] transition-all">
         <div className="flex items-center justify-between gap-4 px-2">
-          
+
           {/* Logo Group */}
           <div className="flex items-center gap-3 pl-2">
             <div className="w-8 h-8 rounded-md bg-[#10b981] flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)]">
@@ -69,18 +69,17 @@ function App() {
               CA-Assist
             </h1>
           </div>
-          
+
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1 bg-white/[0.02] p-1 rounded-full border border-white/[0.02] shadow-inner">
             {navItems.map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id as any)}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${
-                  activeTab === id
+                className={`relative px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${activeTab === id
                     ? 'bg-white/10 text-[#10b981] shadow-sm border border-[#10b981]/20'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
+                  }`}
               >
                 {label}
               </button>
@@ -89,7 +88,7 @@ function App() {
 
           {/* Actions Group */}
           <div className="flex items-center gap-2 pr-1">
-             {accessToken ? (
+            {accessToken ? (
               <Button onClick={logout} size="sm" className="rounded-full h-8 px-4 bg-white/5 hover:bg-white/10 border-0 text-white text-xs font-semibold backdrop-blur-md transition-all">
                 Logout
               </Button>
@@ -107,18 +106,17 @@ function App() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-[110%] left-0 right-0 bg-[#0a0a0a]/95 backdrop-blur-2xl rounded-2xl p-2 border border-white/10 shadow-2xl space-y-1">
-             {navItems.map(({ id, label, icon: Icon }) => (
+            {navItems.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => {
                   setActiveTab(id as any);
                   setMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                  activeTab === id
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === id
                     ? 'bg-[#10b981]/10 text-[#10b981]'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
+                  }`}
               >
                 <Icon size={18} />
                 {label}
@@ -138,7 +136,7 @@ function App() {
           )}
 
           {activeTab === 'home' && <HomeScreen onAuthClick={() => setShowAuthModal(true)} />}
-          
+
           <div className="flex-1 min-h-0">
             {accessToken ? (
               activeTab !== 'home' && (
@@ -172,7 +170,7 @@ function App() {
       </main>
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-    </div>
+    </div >
   )
 }
 

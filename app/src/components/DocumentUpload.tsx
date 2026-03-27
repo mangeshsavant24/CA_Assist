@@ -19,6 +19,7 @@ import { Button } from './ui/Button';
 import { uploadDocumentAPI } from '../lib/api';
 import { formatCurrency, cn } from '../lib/utils';
 import { useAppStore } from '../store/appStore';
+import { DocumentList } from './DocumentList';
 
 interface ExtractedData {
   gross_salary?: number;
@@ -36,7 +37,7 @@ interface ProcessingStep {
 }
 
 export const DocumentUpload: React.FC = () => {
-  const { userId, setActiveTab, setDocumentExtractedData, addUserDocument, userDocuments, removeUserDocument } = useAppStore();
+  const { userId, setActiveTab, setDocumentExtractedData, setChatDocumentContext, addUserDocument, userDocuments, removeUserDocument } = useAppStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -47,6 +48,8 @@ export const DocumentUpload: React.FC = () => {
   const [documentType, setDocumentType] = useState<
     'salary_slip' | 'form16' | 'invoice' | null
   >(null);
+  const [isRelevantForRegime, setIsRelevantForRegime] = useState(false);
+  const [relevanceReason, setRelevanceReason] = useState<string | null>(null);
   const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([
     { id: 'received', label: 'File received', status: 'pending' },
     { id: 'extracting', label: 'Extracting text', status: 'pending' },
@@ -62,6 +65,7 @@ export const DocumentUpload: React.FC = () => {
     }>
   >([]);
   const [showDocumentHistory, setShowDocumentHistory] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const validateFile = (f: File): string | null => {
     const allowedTypes = [
@@ -140,6 +144,8 @@ export const DocumentUpload: React.FC = () => {
       const ingestInfo = response.ingest_result;
       const backendExtractedData = response.extracted_data || {};
       const backendDocumentType = response.document_type || 'document';
+      const isRelevant = backendExtractedData?.is_relevant_for_regime || false;
+      const relevanceMsg = backendExtractedData?.relevance_reason || null;
 
       // Set success state with actual extracted data
       setExtractedData({
@@ -149,6 +155,10 @@ export const DocumentUpload: React.FC = () => {
         upload_status: 'success',
         ...backendExtractedData,
       });
+      
+      // Set relevance state
+      setIsRelevantForRegime(isRelevant);
+      setRelevanceReason(relevanceMsg);
 
       // Add to user documents list with extracted data
       const newDoc = {
@@ -171,6 +181,7 @@ export const DocumentUpload: React.FC = () => {
         },
       };
       addUserDocument(newDoc);
+      setRefreshTrigger(prev => prev + 1);
 
       // Set document type
       setDocumentType(
@@ -221,6 +232,8 @@ export const DocumentUpload: React.FC = () => {
     setFile(null);
     setExtractedData(null);
     setDocumentType(null);
+    setIsRelevantForRegime(false);
+    setRelevanceReason(null);
     setInsights([]);
     setError(null);
     setProcessingSteps([
@@ -228,6 +241,19 @@ export const DocumentUpload: React.FC = () => {
       { id: 'extracting', label: 'Extracting text', status: 'pending' },
       { id: 'analyzing', label: 'Analyzing fields', status: 'pending' },
     ]);
+  };
+
+  const handleAskAI = () => {
+    if (extractedData && file) {
+      // Store document context in chat
+      setChatDocumentContext({
+        filename: file.name,
+        data: extractedData,
+      });
+      
+      // Switch to chat tab
+      setActiveTab('chat');
+    }
   };
 
   const hasResults = extractedData && !loading;
@@ -463,18 +489,39 @@ export const DocumentUpload: React.FC = () => {
               </div>
 
               <div className="mt-6 pt-6 border-t border-slate-700">
-                <Button
-                  variant="primary"
-                  className="w-full"
-                  onClick={() => {
-                    // Pass extracted data to regime calculator
-                    setDocumentExtractedData(extractedData || {});
-                    setActiveTab('regime');
-                  }}
-                >
-                  <Zap size={16} className="mr-2" />
-                  Use these values in Regime Calculator →
-                </Button>
+                {isRelevantForRegime ? (
+                  <Button
+                    variant="primary"
+                    className="w-full"
+                    onClick={() => {
+                      // Pass extracted data to regime calculator
+                      setDocumentExtractedData(extractedData || {});
+                      setActiveTab('regime');
+                    }}
+                  >
+                    <Zap size={16} className="mr-2" />
+                    Use these values in Regime Calculator →
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <div
+                      className="w-full px-4 py-3 rounded-lg bg-slate-700/50 border border-slate-600 text-slate-300 text-sm cursor-not-allowed opacity-60 flex items-center gap-2"
+                      title={relevanceReason || 'This document cannot be used for regime calculations'}
+                    >
+                      <AlertCircle size={16} className="flex-shrink-0" />
+                      <span>Use in Regime Calculator (Not Applicable)</span>
+                    </div>
+                    {relevanceReason && (
+                      <div className="bg-amber-950/40 border border-amber-700/50 rounded-lg p-3 flex gap-2">
+                        <AlertTriangle
+                          size={16}
+                          className="text-amber-400 flex-shrink-0 mt-0.5"
+                        />
+                        <p className="text-sm text-amber-300">{relevanceReason}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -539,7 +586,7 @@ export const DocumentUpload: React.FC = () => {
                           variant="secondary"
                           size="sm"
                           className="mt-3 text-xs"
-                          onClick={() => console.log('Navigate to calculator')}
+                          onClick={handleAskAI}
                         >
                           Calculate Now →
                         </Button>
@@ -563,6 +610,9 @@ export const DocumentUpload: React.FC = () => {
             Upload Another Document
           </Button>
         )}
+
+        {/* My Documents Section (fetched from backend) */}
+        <DocumentList refreshTrigger={refreshTrigger} />
 
         {/* Document History Section */}
         <Card className="bg-slate-900 border-slate-700">

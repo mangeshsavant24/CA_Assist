@@ -8,6 +8,7 @@ import {
   BookOpen,
   FileText,
   Zap,
+  X,
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/appStore';
@@ -155,6 +156,8 @@ export const ChatScreen: React.FC = () => {
     userId,
     isLoading,
     setIsLoading,
+    chatDocumentContext,
+    setChatDocumentContext,
   } = useAppStore();
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -234,10 +237,28 @@ export const ChatScreen: React.FC = () => {
         </Button>
       </div>
 
+      {/* Document Context Banner */}
+      {chatDocumentContext && (
+        <div className="border-b border-slate-800 bg-slate-900/50 px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            <FileText size={16} className="text-teal-400" />
+            <span className="text-slate-300">
+              Document context: <span className="font-semibold text-teal-400">{chatDocumentContext.filename}</span>
+            </span>
+          </div>
+          <button
+            onClick={() => setChatDocumentContext(null)}
+            className="text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="space-y-4">
-            {isEmpty ? (
+            {isEmpty && !chatDocumentContext ? (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center max-w-md mx-auto animate-in fade-in">
                   <Zap className="w-16 h-16 text-teal-400 mx-auto mb-6 animate-scale-in" />
@@ -259,6 +280,42 @@ export const ChatScreen: React.FC = () => {
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+            ) : isEmpty && chatDocumentContext ? (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center max-w-2xl mx-auto animate-in fade-in w-full">
+                  <FileText className="w-16 h-16 text-teal-400 mx-auto mb-6" />
+                  <h2 className="text-2xl font-bold text-slate-50 mb-2">
+                    Document information loaded
+                  </h2>
+                  <p className="text-sm text-slate-400 mb-6">
+                    Here's the information extracted from your document. Ask any questions about it.
+                  </p>
+
+                  {/* Extracted Data Display */}
+                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-6 text-left max-h-64 overflow-y-auto">
+                    {chatDocumentContext.data && Object.entries(chatDocumentContext.data).map(([key, value]) => {
+                      if (value === null || value === undefined || key === 'filename' || key === 'file_size' || key === 'chunks_added' || key === 'upload_status') return null;
+                      
+                      const label = key
+                        .replace(/_/g, ' ')
+                        .split(' ')
+                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' ');
+
+                      return (
+                        <div key={key} className="flex justify-between items-center py-2 border-b border-slate-700 last:border-0">
+                          <span className="text-sm text-slate-400">{label}</span>
+                          <span className="text-sm font-semibold text-teal-400">{String(value)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <p className="text-xs text-slate-500 mb-6">
+                    Use the input below to ask questions related to this document or tax calculations.
+                  </p>
                 </div>
               </div>
             ) : (
@@ -349,7 +406,7 @@ export const ChatScreen: React.FC = () => {
                 handleSendMessage(input);
               }
             }}
-            placeholder="Ask about deductions, ITR, GST, tax regime..."
+            placeholder={chatDocumentContext ? "Ask about this document, tax implications, calculations..." : "Ask about deductions, ITR, GST, tax regime..."}
             className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-50 placeholder-slate-500"
             rows={1}
             style={{ maxHeight: '120px' }}

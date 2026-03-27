@@ -7,19 +7,23 @@ langchain
 langchain-community
 langchain-core
 langchain-ollama
+langchain-openai
 langchain-huggingface
 langchain-chroma
 chromadb
 sentence-transformers
 PyPDF2
-pytesseract
 Pillow
-openai
+pytesseract
 httpx
+requests
 pytest
 torch>=2.0.0
 torchvision>=0.17.0
 sqlalchemy
 python-jose[cryptography]
-passlib[bcrypt]
+passlib[bcrypt]>=1.7.4
+# FIXED: Pin bcrypt to 4.0.1 — last version compatible with passlib 1.7.x
+bcrypt==4.0.1
 PyJWT
+python-multipart

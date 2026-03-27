@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User
@@ -15,6 +15,14 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     full_name: Optional[str] = None
+    
+    # FIXED: Validate bcrypt 72-byte password limit at schema level
+    @field_validator('password')
+    @classmethod
+    def password_byte_length(cls, v):
+        if len(v.encode('utf-8')) > 72:
+            raise ValueError('Password must be 72 characters or fewer')
+        return v
 
 
 class UserLogin(BaseModel):
@@ -51,6 +59,13 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
+        )
+    
+    # FIXED: bcrypt 72-byte limit — validate password before hashing (redundant with schema validator but defensive)
+    if len(user_data.password.encode('utf-8')) > 72:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Password must be 72 characters or fewer."
         )
     
     # Create new user

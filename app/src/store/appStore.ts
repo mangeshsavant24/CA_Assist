@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Citation } from '@/lib/api'
 
-export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund'
+export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund' | 'forex'
 
 export interface Message {
   id: string
@@ -30,6 +30,8 @@ interface AppStore {
   chatHistory: Message[]
   addMessage: (message: Message) => void
   clearChat: () => void
+  chatDocumentContext: { filename: string; data: Record<string, any> } | null
+  setChatDocumentContext: (context: { filename: string; data: Record<string, any> } | null) => void
   
   // Session & Auth
   sessionId: string
@@ -64,7 +66,9 @@ export const useAppStore = create<AppStore>((set) => ({
   addMessage: (message) => set((state) => ({
     chatHistory: [...state.chatHistory, message],
   })),
-  clearChat: () => set({ chatHistory: [] }),
+  clearChat: () => set({ chatHistory: [], chatDocumentContext: null }),
+  chatDocumentContext: null,
+  setChatDocumentContext: (context) => set({ chatDocumentContext: context }),
   
   // Session & Auth
   sessionId: '',
@@ -76,7 +80,8 @@ export const useAppStore = create<AppStore>((set) => ({
     // Try to load token from localStorage
     const storedToken = localStorage.getItem('accessToken')
     
-    set({ sessionId, userId, accessToken: storedToken || null })
+    // FIXED: Set isAuthenticated flag based on whether token was restored
+    set({ sessionId, userId, accessToken: storedToken || null, isAuthenticated: !!storedToken })
   },
   
   // Authentication
@@ -99,7 +104,8 @@ export const useAppStore = create<AppStore>((set) => ({
       chatHistory: [],
       activeTab: 'home',
       userDocuments: [],
-      documentExtractedData: null
+      documentExtractedData: null,
+      chatDocumentContext: null
     })
   },
   
