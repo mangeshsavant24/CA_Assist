@@ -143,7 +143,7 @@ def test_env_config():
         load_dotenv()
         
         llm_provider = os.getenv("LLM_PROVIDER", "ollama")
-        ollama_model = os.getenv("OLLAMA_MODEL", "llama2")
+        ollama_model = os.getenv("OLLAMA_MODEL", "mistral")
         ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         
         print(f"✅ Environment loaded:")
