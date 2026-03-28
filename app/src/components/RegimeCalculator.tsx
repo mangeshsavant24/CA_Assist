@@ -184,7 +184,9 @@ export const RegimeCalculator: React.FC = () => {
       const data = documentExtractedData;
       if (data.gross_salary) setGrossIncome(String(data.gross_salary));
       if (data.tds_deducted) setOtherDeductions(String(data.tds_deducted));
-      if (data.pf) setSec80c(String(data.pf));
+      if (data.sec80c || data.pf) setSec80c(String(data.sec80c || data.pf));
+      if (data.hra_exemption) setHraExemption(String(data.hra_exemption));
+      if (data.sec80d) setSec80d(String(data.sec80d));
       setDocumentUsed(true);
     }
   }, [documentExtractedData, documentUsed]);

@@ -5,7 +5,7 @@ const isBrowser = typeof window !== 'undefined'
 const defaultHost = isBrowser ? window.location.hostname : 'localhost'
 const API_BASE_URL = ((import.meta as any).env?.VITE_API_URL as string) || 'http://127.0.0.1:8000'
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   // Don't set default Content-Type: let Axios auto-detect
   // - JSON requests: Axios auto-sets application/json

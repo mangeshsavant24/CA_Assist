@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Download,
   Trash2,
   FolderOpen,
   FileText,
-  AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { cn } from '../lib/utils';
+import { apiClient } from '../lib/api';
 
 interface Document {
   id: string;
@@ -76,24 +75,13 @@ export const DocumentList: React.FC<DocumentListProps> = ({ refreshTrigger = 0 }
     try {
       setLoading(true);
       setError(null);
-      
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/documents/list', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch documents');
-      }
-
-      const data = await response.json();
-      setDocuments(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load documents');
+      const response = await apiClient.get<any>('/document/list');
+      const data = response.data;
+      if (Array.isArray(data)) setDocuments(data);
+      else if (data?.documents && Array.isArray(data.documents)) setDocuments(data.documents);
+      else setDocuments([]);
+    } catch {
+      // Silently fail — list is decorative; errors shown if they affect upload
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -104,37 +92,6 @@ export const DocumentList: React.FC<DocumentListProps> = ({ refreshTrigger = 0 }
     fetchDocuments();
   }, [refreshTrigger]);
 
-  const handleDownload = (docId: string, filename: string) => {
-    const token = localStorage.getItem('auth_token');
-    const url = `/api/documents/download/${docId}`;
-    
-    // Create a temporary anchor element to trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    
-    // Add auth header via fetch for better control
-    fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
-      .then((response) => response.blob())
-      .then((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      })
-      .catch((err) => {
-        console.error('Download failed:', err);
-      });
-  };
-
   const handleDeleteClick = (docId: string) => {
     setConfirmDeleteId(docId);
   };
@@ -142,28 +99,10 @@ export const DocumentList: React.FC<DocumentListProps> = ({ refreshTrigger = 0 }
   const handleConfirmDelete = async (docId: string) => {
     try {
       setDeletingId(docId);
-      const token = localStorage.getItem('auth_token');
-      
-      const response = await fetch(`/api/documents/${docId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete document');
-      }
-
-      // Remove from UI with animation
+      await apiClient.delete(`/document/${docId}`);
       setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
       setConfirmDeleteId(null);
-      
-      // Show toast (you could use a toast library here)
-      console.log('Document deleted successfully');
-    } catch (err) {
-      console.error('Delete error:', err);
+    } catch {
       setConfirmDeleteId(null);
     } finally {
       setDeletingId(null);
@@ -173,19 +112,6 @@ export const DocumentList: React.FC<DocumentListProps> = ({ refreshTrigger = 0 }
   const handleCancelDelete = () => {
     setConfirmDeleteId(null);
   };
-
-  if (error) {
-    return (
-      <Card className="bg-slate-900 border-slate-700">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3 text-red-400">
-            <AlertCircle size={20} />
-            <p>{error}</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="bg-slate-900 border-slate-700">
@@ -259,18 +185,6 @@ export const DocumentList: React.FC<DocumentListProps> = ({ refreshTrigger = 0 }
                     </div>
 
                     <div className="flex-shrink-0 flex gap-2 ml-4">
-                      <button
-                        onClick={() => handleDownload(doc.id, doc.original_filename)}
-                        className={cn(
-                          'p-2 rounded-md border border-slate-600',
-                          'bg-slate-700 hover:bg-teal-700',
-                          'transition-colors text-slate-400 hover:text-teal-300',
-                          'flex-shrink-0'
-                        )}
-                        title="Download"
-                      >
-                        <Download size={14} />
-                      </button>
                       <button
                         onClick={() => handleDeleteClick(doc.id)}
                         className={cn(

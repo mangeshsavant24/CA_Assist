@@ -36,6 +36,32 @@ interface ProcessingStep {
   status: 'completed' | 'processing' | 'pending';
 }
 
+function normalizeExtractedFields(data: Record<string, any>): Record<string, any> {
+  if (!data) return {};
+  const norm: Record<string, any> = { ...data };
+  
+  const findVal = (...keys: string[]) => {
+    for (const k of keys) {
+      if (data[k] !== undefined && data[k] !== null) return data[k];
+    }
+    return null;
+  };
+
+  norm.gross_salary = findVal('gross_salary', 'basic_pay', 'gross_income', 'total_income', 'salary', 'net_salary');
+  norm.tds_deducted = findVal('tds_deducted', 'tds', 'tax_deducted', 'total_tax_deducted', 'income_tax');
+  norm.pf = findVal('pf', 'provident_fund', 'epf', 'employee_provident_fund', '80c', '80c_deduction', 'sec80c');
+  norm.sec80c = norm.pf;
+  norm.hra_exemption = findVal('hra_exemption', 'hra', 'house_rent_allowance', 'rent_allowance');
+  norm.sec80d = findVal('sec80d', 'medical_insurance', 'health_insurance', 'mediclaim', '80d_deduction');
+
+  // filter out nulls so we don't accidentally override valid keys with nulls
+  Object.keys(norm).forEach(k => {
+    if (norm[k] === null) delete norm[k];
+  });
+  
+  return norm;
+}
+
 export const DocumentUpload: React.FC = () => {
   const { userId, setActiveTab, setDocumentExtractedData, setChatDocumentContext, addUserDocument, userDocuments, removeUserDocument } = useAppStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -178,23 +204,15 @@ export const DocumentUpload: React.FC = () => {
 
       console.log('ingestInfo:', ingestInfo);
 
-      const backendExtractedData = response.extracted_data || {};
-      console.log('backendExtractedData:', backendExtractedData);
+      const rawExtractedData = response.extracted_data || {};
+      const backendExtractedData = normalizeExtractedFields(rawExtractedData);
+      console.log('Normalized ExtractedData:', backendExtractedData);
 
-      const backendDocumentType = (response.document_type || backendExtractedData.document_type || 'document').toLowerCase();
+      const backendDocumentType = (response.document_type || rawExtractedData.document_type || 'document').toLowerCase();
       console.log('backendDocumentType:', backendDocumentType);
 
-      const isRelevant = backendExtractedData?.is_relevant_for_regime === true;
-      const relevanceMsg = backendExtractedData?.relevance_reason || null;
-      const extractedText = response.extracted_text || backendExtractedData?.extracted_text_preview || '';
-
-      console.log('Parsed response:', {
-        docInfo,
-        ingestInfo,
-        backendDocumentType,
-        isRelevant,
-        backendExtractedData
-      });
+      const isRelevant = rawExtractedData?.is_relevant_for_regime === true || backendExtractedData.gross_salary != null;
+      const relevanceMsg = rawExtractedData?.relevance_reason || null;
 
       // Set success state with actual extracted data
       setExtractedData({
@@ -203,13 +221,6 @@ export const DocumentUpload: React.FC = () => {
         chunks_added: ingestInfo.chunks_added || 0,
         upload_status: 'success',
         ...backendExtractedData,
-      });
-      
-      console.log('ExtractedData set:', {
-        filename: docInfo.original_filename,
-        file_size: docInfo.file_size,
-        chunks_added: ingestInfo.chunks_added,
-        dataKeys: Object.keys(backendExtractedData || {}),
       });
       
       // Set relevance state
@@ -231,13 +242,7 @@ export const DocumentUpload: React.FC = () => {
           ? new Date(docInfo.uploaded_at) 
           : new Date(),
         fileSize: docInfo.file_size || 0,
-        extractedData: {
-          gross_salary: backendExtractedData?.gross_salary || null,
-          tds_deducted: backendExtractedData?.tds_deducted || null,
-          pf: backendExtractedData?.pf || null,
-          pan: backendExtractedData?.pan || null,
-          gstin: backendExtractedData?.gstin || null,
-        },
+        extractedData: backendExtractedData,
       };
       addUserDocument(newDoc);
       setRefreshTrigger(prev => prev + 1);
