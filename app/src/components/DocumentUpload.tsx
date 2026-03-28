@@ -259,11 +259,11 @@ export const DocumentUpload: React.FC = () => {
   const hasResults = extractedData && !loading;
 
   return (
-    <div className="min-h-full bg-slate-950 px-4 py-6">
+    <div className="min-h-full bg-[#0a0a0a] px-4 py-6">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Upload Zone */}
         {!hasResults && (
-          <Card className="bg-slate-900 border-slate-700">
+          <Card className="bg-black/40 border-white/10">
             <CardContent className="pt-6">
               <div
                 onDragOver={handleDragOver}
@@ -273,8 +273,8 @@ export const DocumentUpload: React.FC = () => {
                 className={cn(
                   'border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-200',
                   isDragging
-                    ? 'border-teal-500 bg-teal-950/30'
-                    : 'border-slate-600 hover:border-teal-500 hover:bg-slate-800/50 bg-slate-900/50'
+                    ? 'border-emerald-600 bg-emerald-950/30'
+                    : 'border-white/10 hover:border-emerald-600 hover:bg-white/5 bg-white/5'
                 )}
               >
                 <input
@@ -295,16 +295,16 @@ export const DocumentUpload: React.FC = () => {
                       size={48}
                       className={cn(
                         'mx-auto mb-4 transition-all',
-                        isDragging ? 'text-teal-400 scale-110' : 'text-slate-500'
+                        isDragging ? 'text-emerald-400 scale-110' : 'text-[#a1a1aa]'
                       )}
                     />
-                    <p className="text-slate-200 font-medium mb-2">
+                    <p className="text-white font-medium mb-2">
                       Drop your salary slip or Form 16 here
                     </p>
-                    <p className="text-sm text-slate-400 mb-3">
+                    <p className="text-sm text-[#a1a1aa] mb-3">
                       Supports PDF · Max 10MB
                     </p>
-                    <p className="text-sm text-teal-400 underline">
+                    <p className="text-sm text-[#10b981] underline">
                       or click to browse files
                     </p>
                   </>
@@ -312,10 +312,10 @@ export const DocumentUpload: React.FC = () => {
                   <>
                     <FileText
                       size={40}
-                      className="mx-auto mb-3 text-teal-400"
+                      className="mx-auto mb-3 text-[#10b981]"
                     />
-                    <p className="text-slate-200 font-medium mb-1">{file.name}</p>
-                    <p className="text-sm text-slate-400 mb-4">
+                    <p className="text-white font-medium mb-1">{file.name}</p>
+                    <p className="text-sm text-[#a1a1aa] mb-4">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                     <Button
@@ -348,7 +348,7 @@ export const DocumentUpload: React.FC = () => {
                 <div className="mt-6 flex gap-3">
                   <Button
                     onClick={handleAnalyze}
-                    className="flex-1 bg-teal-600 hover:bg-teal-700 py-3"
+                    className="flex-1 bg-[#10b981] hover:bg-[#059669] py-3"
                   >
                     Extract & Analyze →
                   </Button>
@@ -365,35 +365,35 @@ export const DocumentUpload: React.FC = () => {
               {loading && (
                 <div className="mt-6 space-y-4">
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-800 rounded-full h-1 overflow-hidden">
-                    <div className="bg-gradient-to-r from-teal-500 to-transparent h-full w-1/3 animate-pulse" />
+                  <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+                    <div className="bg-gradient-to-r from-emerald-600 to-transparent h-full w-1/3 animate-pulse" />
                   </div>
 
                   {/* Processing Steps */}
                   <div className="space-y-3">
-                    <p className="text-sm text-slate-300">Reading document...</p>
+                    <p className="text-sm text-white/80">Reading document...</p>
                     {processingSteps.map((step, idx) => (
                       <div
                         key={step.id}
                         className="flex items-center gap-3 text-sm"
                       >
                         {step.status === 'completed' && (
-                          <CheckCircle2 size={16} className="text-teal-400" />
+                          <CheckCircle2 size={16} className="text-[#10b981]" />
                         )}
                         {step.status === 'processing' && (
                           <RotateCw
                             size={16}
-                            className="text-teal-400 animate-spin"
+                            className="text-[#10b981] animate-spin"
                           />
                         )}
                         {step.status === 'pending' && (
-                          <div className="w-4 h-4 rounded-full border border-slate-600" />
+                          <div className="w-4 h-4 rounded-full border border-white/20" />
                         )}
                         <span
                           className={
                             step.status === 'completed'
-                              ? 'text-teal-400'
-                              : 'text-slate-400'
+                              ? 'text-[#10b981]'
+                              : 'text-[#a1a1aa]'
                           }
                         >
                           {step.label}
@@ -413,10 +413,10 @@ export const DocumentUpload: React.FC = () => {
             className={cn(
               'border-l-4',
               documentType === 'salary_slip'
-                ? 'bg-blue-950/50 border-blue-700 border-l-blue-500'
+                ? 'bg-blue-950/40 border-white/10 border-l-blue-600'
                 : documentType === 'form16'
-                  ? 'bg-violet-950/50 border-violet-700 border-l-violet-500'
-                  : 'bg-amber-950/50 border-amber-700 border-l-amber-500'
+                  ? 'bg-purple-950/40 border-white/10 border-l-purple-600'
+                  : 'bg-amber-950/40 border-white/10 border-l-amber-600'
             )}
           >
             <CardContent className="pt-6">
@@ -427,11 +427,11 @@ export const DocumentUpload: React.FC = () => {
                     documentType === 'salary_slip'
                       ? 'text-blue-400'
                       : documentType === 'form16'
-                        ? 'text-violet-400'
+                        ? 'text-purple-400'
                         : 'text-amber-400'
                   }
                 />
-                <p className="font-semibold text-slate-100">
+                <p className="font-semibold text-white">
                   {documentType === 'salary_slip'
                     ? '📄 Salary Slip Detected — FY 2024-25'
                     : documentType === 'form16'
@@ -445,11 +445,11 @@ export const DocumentUpload: React.FC = () => {
 
         {/* Extracted Fields Section */}
         {hasResults && (
-          <Card className="bg-slate-900 border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <Card className="bg-black/40 border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CardTitle className="text-lg">Extracted Information</CardTitle>
-                <div className="inline-flex items-center gap-1 bg-violet-950 text-violet-400 border border-violet-800 rounded-full px-2 py-0.5 text-xs font-medium">
+                <div className="inline-flex items-center gap-1 bg-purple-950/50 text-purple-400 border border-white/10 rounded-full px-2 py-0.5 text-xs font-medium">
                   <FileJson size={12} />
                   Document Agent
                 </div>
@@ -469,26 +469,26 @@ export const DocumentUpload: React.FC = () => {
                   return (
                     <div
                       key={key}
-                      className="bg-slate-800 border border-slate-700 rounded-lg p-4"
+                      className="bg-white/5 border border-white/10 rounded-lg p-4"
                     >
-                      <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">
+                      <p className="text-xs text-[#a1a1aa] uppercase tracking-wider mb-2">
                         {label}
                       </p>
-                      <p className="text-lg font-mono font-semibold text-slate-100">
+                      <p className="text-lg font-mono font-semibold text-white">
                         {typeof value === 'number' && key.includes('salary')
                           ? formatCurrency(value)
                           : String(value)}
                       </p>
                       <div className="flex items-center gap-1 mt-2 text-xs">
-                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-                        <span className="text-emerald-400">High confidence</span>
+                        <div className="w-1.5 h-1.5 bg-[#10b981] rounded-full" />
+                        <span className="text-[#10b981]">High confidence</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-slate-700">
+              <div className="mt-6 pt-6 border-t border-white/10">
                 {isRelevantForRegime ? (
                   <Button
                     variant="primary"
@@ -505,14 +505,14 @@ export const DocumentUpload: React.FC = () => {
                 ) : (
                   <div className="space-y-3">
                     <div
-                      className="w-full px-4 py-3 rounded-lg bg-slate-700/50 border border-slate-600 text-slate-300 text-sm cursor-not-allowed opacity-60 flex items-center gap-2"
+                      className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-[#a1a1aa] text-sm cursor-not-allowed opacity-60 flex items-center gap-2"
                       title={relevanceReason || 'This document cannot be used for regime calculations'}
                     >
                       <AlertCircle size={16} className="flex-shrink-0" />
                       <span>Use in Regime Calculator (Not Applicable)</span>
                     </div>
                     {relevanceReason && (
-                      <div className="bg-amber-950/40 border border-amber-700/50 rounded-lg p-3 flex gap-2">
+                      <div className="bg-amber-950/30 border border-amber-700/30 rounded-lg p-3 flex gap-2">
                         <AlertTriangle
                           size={16}
                           className="text-amber-400 flex-shrink-0 mt-0.5"
@@ -529,11 +529,11 @@ export const DocumentUpload: React.FC = () => {
 
         {/* Advisory Insights Section */}
         {hasResults && insights.length > 0 && (
-          <Card className="bg-slate-900 border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-300 delay-100">
+          <Card className="bg-black/40 border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-300 delay-100">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CardTitle className="text-lg">Tax Insights</CardTitle>
-                <div className="inline-flex items-center gap-1 bg-amber-950 text-amber-400 border border-amber-800 rounded-full px-2 py-0.5 text-xs font-medium">
+                <div className="inline-flex items-center gap-1 bg-amber-950/40 text-amber-400 border border-white/10 rounded-full px-2 py-0.5 text-xs font-medium">
                   <Lightbulb size={12} />
                   Advisory Agent
                 </div>
@@ -547,15 +547,15 @@ export const DocumentUpload: React.FC = () => {
                   className={cn(
                     'border-l-4 rounded-r-lg p-4',
                     insight.type === 'tip'
-                      ? 'bg-teal-950/30 border-l-teal-500'
+                      ? 'bg-emerald-950/30 border-l-emerald-600'
                       : insight.type === 'warning'
-                        ? 'bg-amber-950/30 border-l-amber-500'
-                        : 'bg-emerald-950/30 border-l-emerald-500'
+                        ? 'bg-amber-950/30 border-l-amber-600'
+                        : 'bg-blue-950/30 border-l-blue-600'
                   )}
                 >
                   <div className="flex items-start gap-3">
                     {insight.type === 'tip' && (
-                      <TrendingUp size={16} className="text-teal-400 flex-shrink-0 mt-1" />
+                      <TrendingUp size={16} className="text-[#10b981] flex-shrink-0 mt-1" />
                     )}
                     {insight.type === 'warning' && (
                       <AlertTriangle
@@ -566,17 +566,17 @@ export const DocumentUpload: React.FC = () => {
                     {insight.type === 'action' && (
                       <Lightbulb
                         size={16}
-                        className="text-emerald-400 flex-shrink-0 mt-1"
+                        className="text-blue-400 flex-shrink-0 mt-1"
                       />
                     )}
                     <div className="flex-1">
-                      <p className="font-medium text-slate-200 mb-1">
+                      <p className="font-medium text-white mb-1">
                         {insight.title}
                       </p>
-                      <p className="text-sm text-slate-300 mb-3">
+                      <p className="text-sm text-white/80 mb-3">
                         {insight.description}
                       </p>
-                      <button className="text-xs text-slate-400 hover:text-teal-400 transition-colors inline-flex items-center gap-1">
+                      <button className="text-xs text-[#a1a1aa] hover:text-[#10b981] transition-colors inline-flex items-center gap-1">
                         <BookOpen size={12} />
                         {insight.source}
                       </button>
@@ -615,7 +615,7 @@ export const DocumentUpload: React.FC = () => {
         <DocumentList refreshTrigger={refreshTrigger} />
 
         {/* Document History Section */}
-        <Card className="bg-slate-900 border-slate-700">
+        <Card className="bg-black/40 border-white/10">
           <CardHeader>
             <button
               onClick={() => setShowDocumentHistory(!showDocumentHistory)}
@@ -623,7 +623,7 @@ export const DocumentUpload: React.FC = () => {
             >
               <div className="flex items-center gap-2">
                 <CardTitle>Your Uploaded Documents</CardTitle>
-                <div className="inline-flex items-center gap-1 bg-slate-800 text-slate-300 border border-slate-700 rounded-full px-2.5 py-0.5 text-xs font-medium">
+                <div className="inline-flex items-center gap-1 bg-white/10 text-white/70 border border-white/10 rounded-full px-2.5 py-0.5 text-xs font-medium">
                   {userDocuments.length}
                 </div>
               </div>
@@ -638,36 +638,36 @@ export const DocumentUpload: React.FC = () => {
             <CardContent>
               {userDocuments.length === 0 ? (
                 <div className="text-center py-12">
-                  <FileText size={48} className="mx-auto mb-4 text-slate-500" />
-                  <p className="text-slate-400 mb-2">No documents uploaded yet</p>
-                  <p className="text-sm text-slate-500">Upload your first document to get started</p>
+                  <FileText size={48} className="mx-auto mb-4 text-[#a1a1aa]" />
+                  <p className="text-[#a1a1aa] mb-2">No documents uploaded yet</p>
+                  <p className="text-sm text-[#a1a1aa]">Upload your first document to get started</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {userDocuments.map((doc) => (
                     <div
                       key={doc.id}
-                      className="flex items-center justify-between p-4 bg-slate-800 border border-slate-700 rounded-lg hover:border-slate-600 transition-colors"
+                      className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-lg hover:border-white/20 transition-colors"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <FileText size={18} className="text-teal-400 flex-shrink-0" />
+                          <FileText size={18} className="text-[#10b981] flex-shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-slate-100 truncate">
+                            <p className="font-medium text-white truncate">
                               {doc.filename}
                             </p>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs text-[#a1a1aa]">
                                 {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
                               </span>
-                              <span className="text-xs text-slate-500">•</span>
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs text-[#a1a1aa]">•</span>
+                              <span className="text-xs text-[#a1a1aa]">
                                 {new Date(doc.uploadedAt).toLocaleDateString('en-IN')}
                               </span>
                               {doc.documentType && (
                                 <>
-                                  <span className="text-xs text-slate-500">•</span>
-                                  <span className="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">
+                                  <span className="text-xs text-[#a1a1aa]">•</span>
+                                  <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70">
                                     {doc.documentType === 'salary_slip'
                                       ? 'Salary Slip'
                                       : doc.documentType === 'form16'

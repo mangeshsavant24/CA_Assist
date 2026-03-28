@@ -18,16 +18,16 @@ export default function Sidebar() {
   ]
 
   return (
-    <div className="sidebar w-60 bg-slate-950 border-r border-slate-800 flex flex-col">
+    <div className="sidebar w-60 bg-[#0a0a0a] border-r border-white/5 flex flex-col backdrop-blur-2xl">
       {/* Logo Section */}
-      <div className="p-5 border-b border-slate-800">
+      <div className="p-5 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#10b981] rounded-lg flex items-center justify-center">
             <span className="text-white font-mono font-bold">CA</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-slate-50">CA-Assist</h1>
-            <p className="text-xs text-slate-400">Tax & Compliance</p>
+            <h1 className="text-lg font-bold text-white">CA-Assist</h1>
+            <p className="text-xs text-[#a1a1aa]">Tax & Compliance</p>
           </div>
         </div>
       </div>
@@ -40,8 +40,8 @@ export default function Sidebar() {
             onClick={() => setActiveTab(id as any)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
               activeTab === id
-                ? 'bg-teal-950 text-teal-400 border-r-2 border-teal-400'
-                : 'text-slate-400 hover:text-slate-50 hover:bg-slate-900'
+                ? 'bg-emerald-950/40 text-[#10b981] border-r-2 border-[#10b981]'
+                : 'text-[#a1a1aa] hover:text-white hover:bg-white/10'
             }`}
           >
             <Icon className="w-5 h-5" />
@@ -51,8 +51,8 @@ export default function Sidebar() {
       </nav>
 
       {/* Disclaimer */}
-      <div className="p-4 border-t border-slate-800">
-        <p className="text-xs text-slate-500 leading-relaxed">
+      <div className="p-4 border-t border-white/5">
+        <p className="text-xs text-[#a1a1aa] leading-relaxed">
           ⚠️ AI guidance only. Not a substitute for professional CA advice.
         </p>
       </div>

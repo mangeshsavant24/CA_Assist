@@ -4,7 +4,7 @@ venv/
 __pycache__/
 *.pyc
 dist/
-build/
+build/  
 .env
 chroma_db/
 knowledge_base/
