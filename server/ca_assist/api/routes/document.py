@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 from api.schemas import CitedResponse
 from api.dependencies import get_current_user
@@ -31,6 +31,21 @@ async def upload_document(
     Extracts financial data and determines relevance for regime calculations.
     """
     try:
+        # File type validation
+        extension = file.filename.split('.')[-1].lower() if '.' in file.filename else ''
+        allowed_extensions = {"pdf", "png", "jpg", "jpeg"}
+        if extension not in allowed_extensions:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": "Only PDF, JPEG, and PNG files are supported.",
+                    "extracted_text": None,
+                    "chunks_added": 0,
+                    "error": "Unsupported file type: .%s" % extension,
+                },
+            )
+
         # Create user-specific folder
         user_folder = os.path.join(USER_DOCUMENTS_BASE, str(current_user.id))
         os.makedirs(user_folder, exist_ok=True)
@@ -47,7 +62,12 @@ async def upload_document(
         # ── Step 1: Extract text + classify document (DocumentAgent) ──
         extraction_error = None
         doc_agent = DocumentAgent()
-        extraction_result = doc_agent.handle(file_path)
+        try:
+            extraction_result = doc_agent.handle(file_path)
+            print(f"[DOCUMENT] Extraction result: {extraction_result}")
+        except Exception as agent_exc:
+            print(f"[DOCUMENT] DocumentAgent.handle failed: {agent_exc}")
+            raise agent_exc
 
         document_type = extraction_result.get("document_type", "unknown")
         is_relevant = extraction_result.get("is_relevant_for_regime", False)
@@ -57,10 +77,6 @@ async def upload_document(
         confidence = extraction_result.get("confidence", 0.0)
         detected_by = extraction_result.get("detected_by", "heuristic")
         llm_enhancement = extraction_result.get("llm_enhancement", "unavailable")
-
-        if extraction_result.get("error"):
-            extraction_error = extraction_result["error"]
-            print(f"Document extraction warning: {extraction_error}")
 
         # ── Step 2: Create database record ────────────────────────────
         user_doc = UserDocument(
@@ -138,43 +154,68 @@ async def upload_document(
 
         # ── Final standardized JSON output ─────────────────────────────
         from fastapi.responses import JSONResponse
+
         return JSONResponse(
             status_code=200,
             content={
                 "success": True,
-                "document_id": str(user_doc.id),
-                "filename": file.filename,
-                "file_size_bytes": file_size,
+                "message": "Document uploaded and processed successfully.",
+                "document": {
+                    "id": str(user_doc.id),
+                    "original_filename": user_doc.original_filename,
+                    "file_path": user_doc.file_path,
+                    "file_size": user_doc.file_size,
+                    "description": user_doc.description,
+                    "uploaded_at": user_doc.uploaded_at.isoformat() if user_doc.uploaded_at else None,
+                },
+                "ingest_result": {
+                    "success": ingest_result.get("error") is None,
+                    "chunks_added": chunks,
+                    "error": ingest_result.get("error"),
+                },
+                "extracted_data": {
+                    **extraction_result,
+                    "document_type": document_type,
+                    "is_relevant_for_regime": is_relevant,
+                    "is_relevant_for_forex": is_relevant_forex,
+                    "is_relevant_for_fund": is_relevant_fund,
+                    "confidence": float(confidence),
+                    "detected_by": detected_by,
+                    "llm_enhancement": llm_enhancement,
+                },
                 "document_type": document_type,
-                "confidence": float(confidence),
-                "detected_by": detected_by,
-                "is_relevant_for_regime": is_relevant,
-                "is_relevant_for_forex": is_relevant_forex,
-                "is_relevant_for_fund": is_relevant_fund,
-                "extracted_fields": extraction_result,
+                "extracted_text": extracted_text_preview,
                 "chunks_added": chunks,
-                "llm_enhancement": llm_enhancement,
-                "suggested_action": suggested_action
-            }
+                "error": None,
+            },
         )
         
     except HTTPException:
         raise  # let FastAPI handle auth/custom errors normally
         
     except Exception as e:
-        # ── Guaranteed JSON error response ───────────────────────────
-        from fastapi.responses import JSONResponse
+        # ── Guaranteed JSON error response (with standardized schema) ──
         return JSONResponse(
-            status_code=200,
+            status_code=500,
             content={
                 "success": False,
+                "message": "Document processing failed.",
+                "extracted_text": None,
+                "chunks_added": 0,
                 "error": str(e),
-                "document_type": "unknown",
-                "extracted_fields": {},
-                "is_relevant_for_regime": False,
-                "is_relevant_for_forex": False,
-                "is_relevant_for_fund": False
-            }
+                "document": None,
+                "ingest_result": {
+                    "success": False,
+                    "chunks_added": 0,
+                    "error": str(e),
+                },
+                "extracted_data": {
+                    "document_type": "unknown",
+                    "is_relevant_for_regime": False,
+                    "is_relevant_for_forex": False,
+                    "is_relevant_for_fund": False,
+                },
+            },
         )
 
 

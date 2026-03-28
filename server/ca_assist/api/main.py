@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from api.routes import query, document, regime, capital_budget, fund, auth, forex
@@ -8,6 +10,43 @@ from database import init_db
 load_dotenv()
 
 app = FastAPI(title="CA-Assist API", version="1.0.0")
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Convert Pydantic errors to readable string
+    error_messages = []
+    for error in exc.errors():
+        field = ".".join(str(loc) for loc in error.get("loc", []))
+        msg = error.get("msg", "Unknown error")
+        error_messages.append(f"{field}: {msg}")
+    
+    error_text = "; ".join(error_messages) if error_messages else "Validation error"
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "message": "Validation error",
+            "error": error_text,
+            "extracted_text": None,
+            "chunks_added": 0,
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "message": "Internal server error",
+            "error": str(exc),
+            "extracted_text": None,
+            "chunks_added": 0,
+        },
+    )
 
 # Initialize database on startup
 @app.on_event("startup")

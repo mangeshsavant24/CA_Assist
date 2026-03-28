@@ -7,6 +7,7 @@ import { FundAccounting } from './components/FundAccounting'
 import { ForexValuation } from './components/ForexValuation'
 import { HomeScreen } from './components/HomeScreen'
 import { AuthModal } from './components/AuthModal'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { LogOut, Menu, X, Home, MessageSquare, TrendingUp, PieChart, Upload, DollarSign } from 'lucide-react'
 import { Button } from './components/ui/Button'
 import { CanvasDots } from './components/CanvasDots'
@@ -49,7 +50,8 @@ function App() {
   }, [activeTab])
 
   return (
-    <div className="relative flex flex-col h-screen w-full overflow-hidden bg-[#050505] text-slate-50 font-sans selection:bg-[#10b981]/30">
+    <ErrorBoundary>
+      <div className="relative flex flex-col h-screen w-full overflow-hidden bg-[#050505] text-slate-50 font-sans selection:bg-[#10b981]/30">
 
       {/* Background gradients for premium glowing feel */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
@@ -172,7 +174,8 @@ function App() {
       </main>
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-    </div >
+      </div>
+    </ErrorBoundary>
   )
 }
 

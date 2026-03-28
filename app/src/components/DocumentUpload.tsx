@@ -135,25 +135,81 @@ export const DocumentUpload: React.FC = () => {
 
     try {
       const response = await uploadDocumentAPI(file, userId);
+      console.log('Upload response:', response);
 
       // Simulate extraction duration
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Use the document info from response
-      const docInfo = response.document;
-      const ingestInfo = response.ingest_result;
+      // Safety checks on response
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', response ? Object.keys(response) : 'null');
+
+      // Validate response structure
+      if (!response || typeof response !== 'object') {
+        throw new Error('Invalid response from server: not an object. Received: ' + typeof response);
+      }
+
+      // API standard layer - check for success
+      console.log('Response.success:', response.success);
+      if (response.success === false) {
+        const errorMsg = response.error || response.message || 'Document processing failed';
+        throw new Error(errorMsg);
+      }
+
+      if (response.success !== true) {
+        throw new Error(`Unexpected response success value: ${response.success}. Response: ${JSON.stringify(response)}`);
+      }
+
+      // Extract nested objects safely
+      const docInfo = response.document|| {
+        id: `doc-${Date.now()}`,
+        original_filename: file.name || 'Unknown',
+        file_size: file.size || 0,
+        uploaded_at: new Date().toISOString(),
+      };
+
+      console.log('docInfo:', docInfo);
+
+      const ingestInfo = response.ingest_result || { 
+        success: false, 
+        chunks_added: 0, 
+        error: 'No ingest info' 
+      };
+
+      console.log('ingestInfo:', ingestInfo);
+
       const backendExtractedData = response.extracted_data || {};
-      const backendDocumentType = response.document_type || 'document';
-      const isRelevant = backendExtractedData?.is_relevant_for_regime || false;
+      console.log('backendExtractedData:', backendExtractedData);
+
+      const backendDocumentType = (response.document_type || backendExtractedData.document_type || 'document').toLowerCase();
+      console.log('backendDocumentType:', backendDocumentType);
+
+      const isRelevant = backendExtractedData?.is_relevant_for_regime === true;
       const relevanceMsg = backendExtractedData?.relevance_reason || null;
+      const extractedText = response.extracted_text || backendExtractedData?.extracted_text_preview || '';
+
+      console.log('Parsed response:', {
+        docInfo,
+        ingestInfo,
+        backendDocumentType,
+        isRelevant,
+        backendExtractedData
+      });
 
       // Set success state with actual extracted data
       setExtractedData({
+        filename: docInfo.original_filename || 'Unknown',
+        file_size: docInfo.file_size || 0,
+        chunks_added: ingestInfo.chunks_added || 0,
+        upload_status: 'success',
+        ...backendExtractedData,
+      });
+      
+      console.log('ExtractedData set:', {
         filename: docInfo.original_filename,
         file_size: docInfo.file_size,
         chunks_added: ingestInfo.chunks_added,
-        upload_status: 'success',
-        ...backendExtractedData,
+        dataKeys: Object.keys(backendExtractedData || {}),
       });
       
       // Set relevance state
@@ -163,21 +219,24 @@ export const DocumentUpload: React.FC = () => {
       // Add to user documents list with extracted data
       const newDoc = {
         id: docInfo.id || `doc-${Date.now()}`,
-        filename: docInfo.original_filename,
-        documentType: (backendDocumentType === 'salary_slip'
-          ? 'salary_slip'
-          : backendDocumentType === 'form16'
+        filename: docInfo.original_filename || 'Unknown',
+        documentType: (
+          backendDocumentType === 'salary_slip'
+            ? 'salary_slip'
+            : backendDocumentType === 'form_16' || backendDocumentType === 'form16'
             ? 'form16'
-            : 'invoice') as any,
-        uploadedAt: new Date(docInfo.uploaded_at || new Date()),
-        fileSize: docInfo.file_size,
+            : 'invoice'
+        ) as any,
+        uploadedAt: docInfo.uploaded_at 
+          ? new Date(docInfo.uploaded_at) 
+          : new Date(),
+        fileSize: docInfo.file_size || 0,
         extractedData: {
-          gross_salary: backendExtractedData?.gross_salary,
-          tds_deducted: backendExtractedData?.tds_deducted,
-          pf: backendExtractedData?.pf,
-          pan: backendExtractedData?.pan,
-          gstin: backendExtractedData?.gstin,
-          ...backendExtractedData,
+          gross_salary: backendExtractedData?.gross_salary || null,
+          tds_deducted: backendExtractedData?.tds_deducted || null,
+          pf: backendExtractedData?.pf || null,
+          pan: backendExtractedData?.pan || null,
+          gstin: backendExtractedData?.gstin || null,
         },
       };
       addUserDocument(newDoc);
@@ -219,12 +278,57 @@ export const DocumentUpload: React.FC = () => {
 
       updateStep('analyzing', 'completed');
     } catch (err: any) {
-      const errorMsg = err.response?.data?.detail || 'Failed to process document. Please try again.';
+      console.error('=== UPLOAD ERROR ===');
+      console.error('Error object:', err);
+      console.error('Error message:', err?.message);
+      console.error('Error response:', err?.response);
+      console.error('Error stack:', err?.stack);
+
+      // Extract error message, handling various formats
+      let errorMsg = 'Failed to process document. Please try again.';
+      
+      const errorData = err?.response?.data?.error || err?.response?.data?.message;
+      
+      if (errorData) {
+        // Handle array of validation errors (Pydantic)
+        if (Array.isArray(errorData)) {
+          try {
+            errorMsg = errorData
+              .map((e: any) => {
+                if (typeof e === 'string') return e;
+                if (e.msg) return e.msg;
+                if (e.message) return e.message;
+                return JSON.stringify(e);
+              })
+              .join('; ');
+          } catch {
+            errorMsg = JSON.stringify(errorData);
+          }
+        }
+        // Handle object error (Pydantic single error)
+        else if (typeof errorData === 'object') {
+          try {
+            errorMsg = errorData.msg || errorData.message || JSON.stringify(errorData);
+          } catch {
+            errorMsg = 'An error occurred processing your document.';
+          }
+        }
+        // Handle string error
+        else if (typeof errorData === 'string') {
+          errorMsg = errorData;
+        }
+      } else if (err?.message) {
+        errorMsg = err.message;
+      } else if (err?.toString?.()) {
+        errorMsg = err.toString();
+      }
+      
+      console.error('Final error message:', errorMsg);
       setError(errorMsg);
-      console.error('Upload error:', err);
       updateStep('analyzing', 'completed');
     } finally {
       setLoading(false);
+      console.log('Upload flow completed (loading=false)');
     }
   };
 

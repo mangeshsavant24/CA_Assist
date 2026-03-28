@@ -3,14 +3,18 @@ import { useAppStore } from '../store/appStore'
 // Safely default API base URL to browser origin hostname (useful for testing on cross-device LAN)
 const isBrowser = typeof window !== 'undefined'
 const defaultHost = isBrowser ? window.location.hostname : 'localhost'
-const API_BASE_URL = ((import.meta as any).env?.VITE_API_URL as string) || `http://${defaultHost}:8000`
+const API_BASE_URL = ((import.meta as any).env?.VITE_API_URL as string) || 'http://127.0.0.1:8000'
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Don't set default Content-Type: let Axios auto-detect
+  // - JSON requests: Axios auto-sets application/json
+  // - Multipart requests: Axios auto-sets multipart/form-data with boundary
 })
+
+if (isBrowser && !((import.meta as any).env?.VITE_API_URL as string)) {
+  console.info(`Using default backend URL: ${API_BASE_URL}`)
+}
 
 // Request interceptor to add JWT token to all requests
 apiClient.interceptors.request.use(
@@ -209,12 +213,24 @@ export const calculateFundNAVAPI = async (input: FundInput): Promise<FundOutput>
 export const uploadDocumentAPI = async (file: File, userId: string): Promise<any> => {
   const formData = new FormData()
   formData.append('file', file)
-  const response = await apiClient.post<any>(
-    `/document/upload`,
-    formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } }
-  )
-  return response.data
+
+  console.log('[uploadDocumentAPI] Sending file:', file.name, 'size:', file.size)
+  
+  try {
+    // Do not set Content-Type manually for multipart/form-data; Axios sets boundary automatically.
+    const response = await apiClient.post<any>(`/document/upload`, formData)
+    
+    console.log('[uploadDocumentAPI] Success response:', response.status, response.data)
+    if (!response.data) {
+      throw new Error('Response.data is undefined')
+    }
+    return response.data
+  } catch (error: any) {
+    console.error('[uploadDocumentAPI] Request failed:', error)
+    console.error('[uploadDocumentAPI] Error status:', error?.response?.status)
+    console.error('[uploadDocumentAPI] Error data:', error?.response?.data)
+    throw error
+  }
 }
 
 export const getHealthAPI = async () => {
