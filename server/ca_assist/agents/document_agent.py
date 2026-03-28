@@ -440,51 +440,51 @@ def _extract_salary_slip_fields(text: str) -> dict:
     fields: dict = {}
 
     fields["gross_salary"] = _parse_amount(_first_match(text, [
-        r"gross\s*(?:salary|pay|earnings)\s*[:\-]?\s*[₹]?\s*([\d,]+)",
-        r"gross\s*ctc\s*[:\-]?\s*[₹]?\s*([\d,]+)",
-        r"total\s*earnings\s*[:\-]?\s*[₹]?\s*([\d,]+)",
+        r"gross\s*(?:salary|pay|earnings|income)\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
+        r"gross\s*ctc\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
+        r"total\s*earnings\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
     ]))
 
     fields["basic_pay"] = _parse_amount(_first_match(text, [
-        r"basic\s*(?:pay|salary)\s*[:\-]?\s*[₹]?\s*([\d,]+)",
+        r"basic\s*(?:pay|salary)\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
     ]))
 
     fields["hra"] = _parse_amount(_first_match(text, [
-        r"h\.?r\.?a\.?\s*[:\-]?\s*[₹]?\s*([\d,]+)",
-        r"house\s*rent\s*allowance\s*[:\-]?\s*[₹]?\s*([\d,]+)",
+        r"h\.?r\.?a\.?\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
+        r"house\s*rent\s*allowance\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
     ]))
 
     fields["special_allowance"] = _parse_amount(_first_match(text, [
-        r"special\s*allowance\s*[:\-]?\s*[₹]?\s*([\d,]+)",
+        r"special\s*allowance\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
     ]))
 
     # EPF first (more specific), then generic PF
     fields["pf_deduction"] = _parse_amount(_first_match(text, [
-        r"\bepf\b\s*[:\-]?\s*[₹]?\s*([\d,]+)",
-        r"\bp\.?f\.?\b\s*[:\-]?\s*[₹]?\s*([\d,]+)",
-        r"provident\s*fund\s*[:\-]?\s*[₹]?\s*([\d,]+)",
+        r"\bepf\b\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
+        r"\bp\.?f\.?\b\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
+        r"provident\s*fund\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
     ]))
     # Alias for backward compatibility with API schema
     fields["pf"] = fields["pf_deduction"]
 
     fields["tds_deducted"] = _parse_amount(_first_match(text, [
-        r"\btds\b\s*[:\-]?\s*[₹]?\s*([\d,]+)",
-        r"tax\s*deducted\s*(?:at\s*source)?\s*[:\-]?\s*[₹]?\s*([\d,]+)",
-        r"income\s*tax\s*[:\-]?\s*[₹]?\s*([\d,]+)",
+        r"\btds\b\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
+        r"tax\s*deducted\s*(?:at\s*source)?\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
+        r"income\s*tax\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
     ]))
 
     fields["net_pay"] = _parse_amount(_first_match(text, [
-        r"net\s*(?:pay|salary|take\s*home)\s*[:\-]?\s*[₹]?\s*([\d,]+)",
-        r"take\s*home\s*[:\-]?\s*[₹]?\s*([\d,]+)",
+        r"net\s*(?:pay|salary|take\s*home)\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
+        r"take\s*home\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
     ]))
 
     fields["professional_tax"] = _parse_amount(_first_match(text, [
-        r"professional\s*tax\s*[:\-]?\s*[₹]?\s*([\d,]+)",
-        r"\bp\.?\s*tax\b\s*[:\-]?\s*[₹]?\s*([\d,]+)",
+        r"professional\s*tax\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
+        r"\bp\.?\s*tax\b\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
     ]))
 
     fields["medical_allowance"] = _parse_amount(_first_match(text, [
-        r"medical\s*allowance\s*[:\-]?\s*[₹]?\s*([\d,]+)",
+        r"medical\s*allowance\s*[:\-]?\s*[₹]?\s*([\d,]+\.?\d*)",
     ]))
 
     # Pay period: "March 2025", "Mar 2025", etc.
@@ -660,8 +660,8 @@ def extract_fields_heuristic(text: str, document_type: str) -> dict:
 
 # Fields that should ideally be populated per document type
 _EXPECTED_FIELDS: dict = {
-    "salary_slip":    ["gross_salary", "tds_deducted", "pf", "net_pay", "pan"],
-    "form_16":        ["gross_salary", "tds_deducted", "pan"],
+    "salary_slip":    ["gross_salary", "tds_deducted", "pf", "net_pay", "pan", "hra", "sec80c", "sec80d"],
+    "form_16":        ["gross_salary", "tds_deducted", "pan", "hra", "sec80c", "sec80d"],
     "itr_document":   ["gross_salary", "tds_deducted", "pan"],
     "invoice":        ["invoice_number", "total_amount", "gstin_supplier"],
     "forex_document": ["currency_pair", "amount", "exchange_rate"],
@@ -684,38 +684,40 @@ def enhance_with_llm(text: str, heuristic_result: dict) -> dict:
     doc_type = result.get("document_type", "unknown")
     extracted = result.get("extracted_fields", {})
 
-    # Determine which fields are missing
-    expected = _EXPECTED_FIELDS.get(doc_type, [])
-    missing_fields = [f for f in expected if not extracted.get(f)]
-
-    # Skip LLM if heuristics are already highly confident and complete
-    if result.get("confidence", 0) > 0.7 and not missing_fields:
-        result["llm_enhancement"] = "skipped"
-        return result
-
+    # Always run the LLM if we have one to verify and correct the values, 
+    # as OCR artifacts (like ₹ -> 2) might have corrupted the heuristic extractions.
+    # We will pass both empty and filled fields for verification.
+    
     try:
         from agents import get_llm
         from langchain_core.messages import HumanMessage, SystemMessage
 
         llm = get_llm()
-
-        null_fields_str = ", ".join(missing_fields) if missing_fields else "none"
+        expected = _EXPECTED_FIELDS.get(doc_type, [])
         prompt = (
             f"Document text (first 2000 chars):\n{text[:2000]}\n\n"
             f"Heuristic classification: {doc_type}\n"
-            f"Heuristic confidence: {result.get('confidence', 0)}\n"
-            f"Fields to fill (missing or null): {null_fields_str}\n\n"
+            f"Initial heuristic extraction: {json.dumps(extracted, indent=2)}\n"
+            f"All expected fields for this doc type: {', '.join(expected)}\n\n"
             "Tasks:\n"
             "1. Confirm if document_type is correct. "
             "If wrong, provide the correct type from: "
             "salary_slip, form_16, itr_document, invoice, gst_return, "
             "forex_document, fund_document, tax_notice, unknown.\n"
-            "2. For each missing field, extract the value from the document text.\n"
-            "3. Return ONLY valid JSON — no explanation:\n"
+            "2. Verify the initial heuristic extraction. "
+            "CRITICAL OCR WARNING: The OCR engine heavily misreads the Indian Rupee symbol '₹' as the digit '2', or symbols like '#' or '%'. "
+            "For example, '₹43,750' is often erroneously scanned as '243,750.00', '#1,31,250' or '%65,62'. "
+            "You MUST mathematically analyze the totals to detect and strip these false leading '2's, '#'s, or '%'s. "
+            "3. VERY IMPORTANT FOR SALARY SLIPS: Tax calculations require ANNUAL (Year-To-Date) figures. "
+            "If the document is a salary slip, you MUST extract the YTD (Year To Date) values if available. "
+            "If YTD is not available, you MUST explicitly multiply the monthly amounts by 12 and output the annualized totals for gross_salary, basic_pay, hra, sec80c, sec80d, net_pay, etc.\n"
+            "4. Extract any missing expected fields.\n"
+            "5. Return ONLY valid JSON containing ALL corrected and annualized fields — no explanation:\n"
             '{"document_type_confirmed": true, '
             '"corrected_type": null, '
             '"filled_fields": {"field_name": value}}'
         )
+
 
         messages = [
             SystemMessage(
@@ -869,6 +871,7 @@ class DocumentAgent:
             )
 
         return {
+            **fields,
             # ── Fields expected by ExtractedDataResponse schema ──
             "document_type":          doc_type,
             "is_relevant_for_regime": is_relevant,
@@ -884,9 +887,5 @@ class DocumentAgent:
             "llm_enhancement":        result.get("llm_enhancement", "unavailable"),
             "is_relevant_for_forex":  result.get("is_relevant_for_forex", False),
             "is_relevant_for_fund":   result.get("is_relevant_for_fund", False),
-            "basic_pay":              fields.get("basic_pay"),
-            "hra":                    fields.get("hra"),
-            "net_pay":                fields.get("net_pay"),
-            "pay_period":             fields.get("pay_period"),
             "extracted_text_preview": result.get("extracted_text_preview", ""),
         }
