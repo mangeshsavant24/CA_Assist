@@ -189,10 +189,10 @@ export const FundAccounting: React.FC = () => {
                     onChange={(e) => setFundType(e.target.value as any)}
                     className="w-full h-10 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                   >
-                    <option value="General">General</option>
-                    <option value="Endowment">Endowment</option>
-                    <option value="Restricted">Restricted</option>
-                    <option value="Other">Other</option>
+                    <option className="bg-slate-900" value="General">General</option>
+                    <option className="bg-slate-900" value="Endowment">Endowment</option>
+                    <option className="bg-slate-900" value="Restricted">Restricted</option>
+                    <option className="bg-slate-900" value="Other">Other</option>
                   </select>
                 </div>
 
@@ -233,8 +233,8 @@ export const FundAccounting: React.FC = () => {
                     onChange={(e) => setCurrency(e.target.value as 'INR' | 'USD')}
                     className="w-full h-10 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                   >
-                    <option value="INR">INR (₹)</option>
-                    <option value="USD">USD ($)</option>
+                    <option className="bg-slate-900" value="INR">INR (₹)</option>
+                    <option className="bg-slate-900" value="USD">USD ($)</option>
                   </select>
                 </div>
               </div>
@@ -264,9 +264,9 @@ export const FundAccounting: React.FC = () => {
                       }
                       className="w-full h-10 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     >
-                      <option value="contribution">Contribution</option>
-                      <option value="withdrawal">Withdrawal</option>
-                      <option value="return">Return</option>
+                      <option className="bg-slate-900" value="contribution">Contribution</option>
+                      <option className="bg-slate-900" value="withdrawal">Withdrawal</option>
+                      <option className="bg-slate-900" value="return">Return</option>
                     </select>
                   </div>
 

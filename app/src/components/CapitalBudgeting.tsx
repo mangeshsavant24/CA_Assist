@@ -168,8 +168,8 @@ export const CapitalBudgeting: React.FC = () => {
                     onChange={(e) => setCurrency(e.target.value as 'INR' | 'USD')}
                     className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#10b981]/50"
                   >
-                    <option value="INR">INR (₹)</option>
-                    <option value="USD">USD ($)</option>
+                    <option className="bg-slate-900" value="INR">INR (₹)</option>
+                    <option className="bg-slate-900" value="USD">USD ($)</option>
                   </select>
                 </div>
               </div>

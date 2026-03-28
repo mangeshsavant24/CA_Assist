@@ -110,15 +110,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAuthClick }) => {
 
       {/* Upload + Chat Strip */}
       <div
-        className="rounded-2xl p-4"
+        className="rounded-2xl p-5 md:p-6 shadow-[0_0_40px_rgba(16,185,129,0.08)] transition-all hover:shadow-[0_0_60px_rgba(16,185,129,0.12)] mt-8"
         style={{
-          background: 'rgba(10,10,12,0.7)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          background: 'rgba(16,185,129,0.03)',
+          border: '1px solid rgba(16,185,129,0.2)',
         }}
       >
-        <div className="flex gap-3 items-end">
+        <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-end">
           {/* LEFT: Compact upload zone */}
-          <div className="flex-shrink-0 w-36">
+          <div className="flex-shrink-0 w-full md:w-56">
             <input
               ref={fileInputRef}
               type="file"
@@ -128,25 +128,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAuthClick }) => {
             />
             {pendingFile ? (
               <div
-                className="rounded-xl p-3 text-center border cursor-pointer transition-colors duration-200"
-                style={{ background: 'rgba(16,185,129,0.05)', borderColor: 'rgba(16,185,129,0.4)' }}
+                className="rounded-xl p-4 md:py-6 text-center border cursor-pointer transition-colors duration-200"
+                style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.5)' }}
               >
-                <p className="text-[10px] text-[#10b981] truncate font-medium">{pendingFile.name}</p>
+                <p className="text-sm text-[#10b981] truncate font-semibold">{pendingFile.name}</p>
                 <button
                   onClick={(e) => { e.stopPropagation(); setPendingFile(null) }}
-                  className="mt-1 text-slate-500 hover:text-red-400 transition-colors"
+                  className="mt-2 text-slate-500 hover:text-red-400 transition-colors"
                 >
-                  <X size={12} />
+                  <X size={16} />
                 </button>
               </div>
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="rounded-xl p-3 text-center border border-dashed cursor-pointer transition-colors duration-200 hover:border-teal-700"
-                style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.12)' }}
+                className="rounded-xl p-4 md:py-6 text-center border border-dashed cursor-pointer transition-all duration-200 hover:border-[#10b981]/70 hover:bg-[#10b981]/5"
+                style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.15)' }}
               >
-                <Upload size={20} className="text-[#10b981] mx-auto" />
-                <p className="text-[10px] text-slate-400 mt-1">Upload doc</p>
+                <Upload size={24} className="text-[#10b981] mx-auto mb-2" />
+                <p className="text-sm font-medium text-slate-300">Upload Document</p>
+                <p className="text-xs text-slate-500 mt-1 hidden md:block">PDF, JPG, PNG</p>
               </div>
             )}
           </div>
@@ -154,24 +155,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAuthClick }) => {
           {/* CENTER: Chips + input */}
           <div className="flex-1 min-w-0">
             {/* Suggested prompt chips */}
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex flex-wrap gap-2 mb-3">
               {chips.map((chip) => (
                 <button
                   key={chip}
                   onClick={() => setHomeInput(chip)}
-                  className="rounded-full px-3 py-1 text-xs border transition-colors cursor-pointer"
+                  className="rounded-full px-4 py-1.5 text-xs font-medium border transition-all cursor-pointer hover:border-[#10b981] hover:text-[#10b981] hover:bg-[#10b981]/10"
                   style={{
                     background: 'rgba(255,255,255,0.04)',
                     borderColor: 'rgba(255,255,255,0.10)',
                     color: '#a1a1aa',
-                  }}
-                  onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,0.6)'
-                    ;(e.currentTarget as HTMLElement).style.color = '#10b981'
-                  }}
-                  onMouseLeave={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.10)'
-                    ;(e.currentTarget as HTMLElement).style.color = '#a1a1aa'
                   }}
                 >
                   {chip}
@@ -180,7 +173,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAuthClick }) => {
             </div>
 
             {/* Chat input row */}
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-3">
               <textarea
                 ref={textareaRef}
                 value={homeInput}
@@ -188,15 +181,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAuthClick }) => {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask CA-Assist anything about taxes, GST, compliance..."
                 rows={1}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 text-white placeholder-slate-500 text-sm"
-                style={{ maxHeight: '72px', overflowY: 'auto' }}
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 text-white placeholder-slate-400 text-base shadow-inner"
+                style={{ maxHeight: '96px', overflowY: 'auto' }}
               />
               <button
                 onClick={handleHomeSubmit}
                 disabled={!homeInput.trim() && !pendingFile}
-                className="flex-shrink-0 bg-[#10b981] hover:bg-[#059669] disabled:opacity-40 disabled:cursor-not-allowed text-black rounded-xl px-4 py-3 transition-colors"
+                className="flex-shrink-0 bg-[#10b981] hover:bg-[#059669] disabled:opacity-40 disabled:cursor-not-allowed text-black rounded-xl px-5 py-4 transition-all hover:-translate-y-0.5 shadow-lg"
               >
-                <SendHorizonal size={16} />
+                <SendHorizonal size={20} />
               </button>
             </div>
           </div>
