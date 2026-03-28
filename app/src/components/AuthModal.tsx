@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/Card'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
 import { useAppStore } from '../store/appStore'
-import apiClient from '../lib/api'
+import { loginAPI, registerAPI, getCurrentUserAPI } from '../lib/api'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -21,7 +21,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { setAccessToken } = useAppStore()
+  const { setAccessToken, setCurrentUser } = useAppStore()
 
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -43,14 +43,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true)
 
     try {
-      // Mock successful login directly for frontend demo Demo without hitting backend
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
-      setAccessToken('mock_jwt_access_token_demo_mode')
+      const token = await loginAPI({
+        username: loginData.username,
+        password: loginData.password,
+      })
+
+      if (!token?.access_token) {
+        throw new Error('No access token returned')
+      }
+
+      setAccessToken(token.access_token)
+
+      // Fetch and store current user details
+      try {
+        const user = await getCurrentUserAPI()
+        setCurrentUser(user)
+      } catch (userErr) {
+        console.warn('Unable to fetch current user after login', userErr)
+      }
+
       onClose()
       setLoginData({ username: '', password: '' })
     } catch (err: any) {
-      setError('Login failed. Please try again.')
+      const message = err?.response?.data?.detail || 'Login failed. Please try again.'
+      setError(message)
+      console.error('Login error:', err)
     } finally {
       setLoading(false)
     }
@@ -68,14 +85,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true)
 
     try {
-      // Mock Auto-login after registration
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      setAccessToken('mock_jwt_access_token_demo_mode')
+      await registerAPI({
+        email: registerData.email,
+        password: registerData.password,
+        full_name: registerData.full_name,
+      })
+
+      const token = await loginAPI({
+        username: registerData.email,
+        password: registerData.password,
+      })
+
+      if (!token?.access_token) {
+        throw new Error('No access token returned')
+      }
+
+      setAccessToken(token.access_token)
+
+      // Fetch and store current user details
+      try {
+        const user = await getCurrentUserAPI()
+        setCurrentUser(user)
+      } catch (userErr) {
+        console.warn('Unable to fetch current user after register', userErr)
+      }
+
       onClose()
       setRegisterData({ email: '', password: '', full_name: '', confirmPassword: '' })
     } catch (err: any) {
-      setError('Registration failed. Please try again.')
+      const message = err?.response?.data?.detail || 'Registration failed. Please try again.'
+      setError(message)
+      console.error('Registration error:', err)
     } finally {
       setLoading(false)
     }

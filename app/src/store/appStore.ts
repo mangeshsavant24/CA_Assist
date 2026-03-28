@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { Citation } from '@/lib/api'
+import { getCurrentUserAPI } from '@/lib/api'
+import type { Citation, UserResponse } from '@/lib/api'
 
 export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund' | 'forex'
 
@@ -15,7 +16,7 @@ export interface Message {
 export interface UploadedDocument {
   id: string
   filename: string
-  documentType: 'salary_slip' | 'form16' | 'invoice' | unknown
+  documentType: 'salary_slip' | 'form16' | 'invoice' | string
   uploadedAt: Date
   fileSize: number
   extractedData?: Record<string, any>
@@ -36,6 +37,8 @@ interface AppStore {
   // Session & Auth
   sessionId: string
   userId: string
+  currentUser: UserResponse | null
+  setCurrentUser: (user: UserResponse | null) => void
   initSession: () => void
   
   // Authentication
@@ -73,15 +76,27 @@ export const useAppStore = create<AppStore>((set) => ({
   // Session & Auth
   sessionId: '',
   userId: '',
-  initSession: () => {
+  initSession: async () => {
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    const userId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    
-    // Try to load token from localStorage
+
+    // Try to load token and userId from localStorage
     const storedToken = localStorage.getItem('accessToken')
-    
-    // FIXED: Set isAuthenticated flag based on whether token was restored
-    set({ sessionId, userId, accessToken: storedToken || null, isAuthenticated: !!storedToken })
+    const storedUserId = localStorage.getItem('userId') || ''
+
+    if (storedToken) {
+      set({ sessionId, userId: storedUserId, accessToken: storedToken, isAuthenticated: true })
+      try {
+        const user = await getCurrentUserAPI()
+        set({ userId: user.id, currentUser: user })
+      } catch (error) {
+        // invalid token, clear out
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('userId')
+        set({ accessToken: null, isAuthenticated: false, userId: '', currentUser: null })
+      }
+    } else {
+      set({ sessionId, userId: '', accessToken: null, isAuthenticated: false, currentUser: null })
+    }
   },
   
   // Authentication
@@ -92,10 +107,19 @@ export const useAppStore = create<AppStore>((set) => ({
       set({ accessToken: token, isAuthenticated: true })
     } else {
       localStorage.removeItem('accessToken')
-      set({ accessToken: null, isAuthenticated: false })
+      set({ accessToken: null, isAuthenticated: false, userId: '', currentUser: null })
     }
   },
   isAuthenticated: false,
+  currentUser: null,
+  setCurrentUser: (user) => {
+    if (user) {
+      localStorage.setItem('userId', user.id)
+    } else {
+      localStorage.removeItem('userId')
+    }
+    set({ currentUser: user, userId: user?.id || '' })
+  },
   logout: () => {
     localStorage.removeItem('accessToken')
     set({ 

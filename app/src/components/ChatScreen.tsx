@@ -194,7 +194,6 @@ export const ChatScreen: React.FC = () => {
     try {
       const response = await queryAPI({
         query: question,
-        user_id: userId,
       });
 
       const assistantMessage: Message = {
@@ -202,7 +201,7 @@ export const ChatScreen: React.FC = () => {
         role: 'assistant',
         content: response.answer,
         citations: response.citations,
-        agent: 'tax', // This would be determined by orchestrator in real impl
+        agent: 'TAX_QUERY', // This would be determined by orchestrator in real impl
         timestamp: new Date(),
       };
 

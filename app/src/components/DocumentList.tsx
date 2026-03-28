@@ -22,7 +22,8 @@ interface DocumentListProps {
 }
 
 const formatFileSize = (bytes: number): string => {
-  return Math.round(bytes / 1024);
+  const kb = Math.round(bytes / 1024)
+  return `${kb} KB`
 };
 
 const formatRelativeTime = (dateString: string): string => {

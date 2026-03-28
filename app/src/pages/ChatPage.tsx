@@ -40,7 +40,6 @@ export default function ChatPage() {
     try {
       const response = await queryAPI({
         query: inputValue,
-        user_id: sessionId,
       })
 
       const assistantMessage = {

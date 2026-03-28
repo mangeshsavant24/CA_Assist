@@ -1,7 +1,9 @@
 import axios from 'axios'
 import { useAppStore } from '../store/appStore'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Safely default API base URL to browser origin hostname (useful for testing on cross-device LAN)
+const isBrowser = typeof window !== 'undefined'
+const defaultHost = isBrowser ? window.location.hostname : 'localhost'
+const API_BASE_URL = ((import.meta as any).env?.VITE_API_URL as string) || `http://${defaultHost}:8000`
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -15,7 +17,8 @@ apiClient.interceptors.request.use(
   (config) => {
     const { accessToken } = useAppStore.getState()
     if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`
+      // Use config.headers.set to ensure modern axios versions correctly serialize the header
+      config.headers.set('Authorization', `Bearer ${accessToken}`)
     }
     return config
   },
@@ -60,10 +63,14 @@ export interface UserResponse {
   created_at: string
 }
 
+export const getCurrentUserAPI = async (): Promise<UserResponse> => {
+  const response = await apiClient.get<UserResponse>('/auth/me')
+  return response.data
+}
+
 // Query Interfaces
 export interface QueryRequest {
   query: string
-  user_id: string
 }
 
 export interface Citation {
@@ -127,7 +134,7 @@ export interface RegimeOutput {
 }
 
 export const queryAPI = async (request: QueryRequest): Promise<CitedResponse> => {
-  const response = await apiClient.post<CitedResponse>('/query', request)
+  const response = await apiClient.post<CitedResponse>('/query', { query: request.query })
   return response.data
 }
 
