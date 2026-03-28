@@ -59,15 +59,16 @@ function App() {
 
       <CanvasDots />
 
-      {/* Floating Pill Navbar */}
-      <header className="relative z-30 mx-4 lg:mx-auto lg:max-w-5xl mt-6 rounded-full bg-black/40 backdrop-blur-2xl border border-white/5 p-2 shadow-[0_8px_40px_-12px_rgba(16,185,129,0.2)] transition-all">
-        <div className="flex items-center justify-between gap-4 px-2">
+      {/* Floating Navbar - No Background */}
+      <header className="relative z-30 w-full md:mx-4 md:lg:mx-auto md:lg:max-w-5xl md:mt-6 md:rounded-full px-4 py-3 md:p-2 transition-all">
+        <div className="flex items-center justify-between gap-4 md:px-2">
 
-          {/* Logo Group */}
+          {/* Logo + Mobile Menu Button Group */}
           <div className="flex items-center gap-3 pl-2">
-            <div className="w-8 h-8 rounded-md bg-[#10b981] flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+            {/* Logo - Clickable to Toggle Menu */}
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="w-8 h-8 rounded-md bg-[#10b981] flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:bg-[#059669] transition-colors">
               <span className="text-black font-black text-xs tracking-tighter">CA</span>
-            </div>
+            </button>
             <h1 className="text-lg font-bold text-white tracking-tight hidden sm:block">
               CA-Assist
             </h1>
@@ -100,15 +101,12 @@ function App() {
                 Sign In
               </Button>
             )}
-            <button className="md:hidden p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/5 transition-colors" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
           </div>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-[110%] left-0 right-0 bg-[#0a0a0a]/95 backdrop-blur-2xl rounded-2xl p-2 border border-white/10 shadow-2xl space-y-1">
+          <div className="md:hidden absolute top-[100%] left-4 right-4 mt-2 bg-black/30 backdrop-blur-xl rounded-2xl p-2 border border-white/10 shadow-2xl space-y-1">
             {navItems.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
