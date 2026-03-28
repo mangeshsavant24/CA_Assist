@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { getCurrentUserAPI } from '@/lib/api'
 import type { Citation, UserResponse } from '@/lib/api'
 
-export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund' | 'forex'
+export type ActiveTab = 'home' | 'chat' | 'regime' | 'document' | 'fund' | 'forex' | 'capital'
 
 export interface Message {
   id: string

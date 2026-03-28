@@ -238,6 +238,19 @@ export const getHealthAPI = async () => {
   return response.data
 }
 
+export const listDocumentsAPI = async (): Promise<any[]> => {
+  try {
+    const response = await apiClient.get<any>('/document/list')
+    const data = response.data
+    if (Array.isArray(data)) return data
+    if (data?.documents && Array.isArray(data.documents)) return data.documents
+    return []
+  } catch {
+    return []
+  }
+}
+
+
 // Auth APIs
 export const registerAPI = async (data: UserRegister): Promise<UserResponse> => {
   const response = await apiClient.post<UserResponse>('/auth/register', data)

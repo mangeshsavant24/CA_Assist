@@ -1,22 +1,30 @@
-import { useEffect, useMemo, useState } from 'react'
+// MODIFIED: 2026-03-28 — layout restructure
+// Changed: Replaced embedded navbar with <Navbar> component, restructured content area,
+//          Chat page now gets full viewport height, feature pages use standard scroll layout,
+//          Added Capital Budgeting as standalone route, auth modals for login/register separately
+// Preserved: CanvasDots, gradient background blobs, all component imports, auth logic, initSession
+
+import { useEffect, useState } from 'react'
 import { useAppStore } from './store/appStore'
 import { ChatScreen } from './components/ChatScreen'
 import { RegimeCalculator } from './components/RegimeCalculator'
+import { CapitalBudgeting } from './components/CapitalBudgeting'
 import { DocumentUpload } from './components/DocumentUpload'
 import { FundAccounting } from './components/FundAccounting'
 import { ForexValuation } from './components/ForexValuation'
 import { HomeScreen } from './components/HomeScreen'
 import { AuthModal } from './components/AuthModal'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { LogOut, Menu, X, Home, MessageSquare, TrendingUp, PieChart, Upload, DollarSign } from 'lucide-react'
-import { Button } from './components/ui/Button'
+import { Navbar } from './components/Navbar'
 import { CanvasDots } from './components/CanvasDots'
+import { LogOut } from 'lucide-react'
+import { Button } from './components/ui/Button'
 
 function App() {
-  const { activeTab, setActiveTab, initSession, accessToken, logout } = useAppStore()
+  const { activeTab, setActiveTab, initSession, accessToken } = useAppStore()
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login')
   const [mounted, setMounted] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     initSession()
@@ -26,156 +34,101 @@ function App() {
   useEffect(() => {
     if (mounted && !accessToken && activeTab !== 'home') {
       setShowAuthModal(true)
+      setAuthInitialMode('login')
     }
   }, [mounted, accessToken, activeTab])
 
-  const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'chat', label: 'Chat', icon: MessageSquare },
-    { id: 'regime', label: 'Regime Calculator', icon: TrendingUp },
-    { id: 'fund', label: 'Fund Accounting', icon: PieChart },
-    { id: 'document', label: 'Document Upload', icon: Upload },
-    { id: 'forex', label: 'Forex Valuation', icon: DollarSign },
-  ]
+  const openLogin = () => {
+    setAuthInitialMode('login')
+    setShowAuthModal(true)
+  }
 
-  const headerTitle = useMemo(() => {
-    switch (activeTab) {
-      case 'chat': return 'Chat AI'
-      case 'regime': return 'Regime Calculator'
-      case 'fund': return 'Fund Accounting'
-      case 'document': return 'Document Upload'
-      case 'forex': return 'Forex Valuation'
-      default: return 'Dashboard'
-    }
-  }, [activeTab])
+  const openRegister = () => {
+    setAuthInitialMode('register')
+    setShowAuthModal(true)
+  }
 
   return (
     <ErrorBoundary>
-      <div className="relative flex flex-col h-screen w-full overflow-hidden bg-[#050505] text-slate-50 font-sans selection:bg-[#10b981]/30">
+      <div className="relative flex flex-col min-h-screen w-full bg-[#020617] text-slate-50 font-sans selection:bg-[#10b981]/30">
 
-      {/* Background gradients for premium glowing feel */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#10b981]/10 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#10b981]/5 blur-[100px]" />
-      </div>
-
-      <CanvasDots />
-
-      {/* Floating Navbar - No Background */}
-      <header className="relative z-30 w-full md:mx-4 md:lg:mx-auto md:lg:max-w-5xl md:mt-6 md:rounded-full px-4 py-3 md:p-2 transition-all">
-        <div className="flex items-center justify-between gap-4 md:px-2">
-
-          {/* Logo + Mobile Menu Button Group */}
-          <div className="flex items-center gap-3 pl-2">
-            {/* Logo - Clickable to Toggle Menu */}
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="w-8 h-8 rounded-md bg-[#10b981] flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:bg-[#059669] transition-colors">
-              <span className="text-black font-black text-xs tracking-tighter">CA</span>
-            </button>
-            <h1 className="text-lg font-bold text-white tracking-tight hidden sm:block">
-              CA-Assist
-            </h1>
-          </div>
-
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1 bg-white/[0.02] p-1 rounded-full border border-white/[0.02] shadow-inner">
-            {navItems.map(({ id, label }) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id as any)}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${activeTab === id
-                  ? 'bg-white/10 text-[#10b981] shadow-sm border border-[#10b981]/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-
-          {/* Actions Group */}
-          <div className="flex items-center gap-2 pr-1">
-            {accessToken ? (
-              <Button onClick={logout} size="sm" className="rounded-full h-8 px-4 bg-white/5 hover:bg-white/10 border-0 text-white text-xs font-semibold backdrop-blur-md transition-all">
-                Logout
-              </Button>
-            ) : (
-              <Button onClick={() => setShowAuthModal(true)} size="sm" className="rounded-full h-8 px-5 bg-[#10b981] hover:bg-[#059669] text-black font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)] border-0 transition-all hover:scale-105">
-                Sign In
-              </Button>
-            )}
-          </div>
+        {/* Background gradient blobs */}
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#10b981]/10 blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#10b981]/5 blur-[100px]" />
         </div>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden absolute top-[100%] left-4 right-4 mt-2 bg-black/30 backdrop-blur-xl rounded-2xl p-2 border border-white/10 shadow-2xl space-y-1">
-            {navItems.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => {
-                  setActiveTab(id as any);
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === id
-                  ? 'bg-[#10b981]/10 text-[#10b981]'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-              >
-                <Icon size={18} />
-                {label}
-              </button>
-            ))}
+        <CanvasDots />
+
+        {/* Navbar — fixed top, z-50 */}
+        <Navbar onLoginClick={openLogin} onRegisterClick={openRegister} />
+
+        {/* Main content — below fixed navbar (pt-16) */}
+        {activeTab === 'home' && (
+          <main className="relative z-20 pt-16 flex-1 overflow-auto hide-scrollbar">
+            <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+              <HomeScreen onAuthClick={openLogin} />
+            </div>
+          </main>
+        )}
+
+        {/* Chat — full viewport below navbar, no extra padding */}
+        {activeTab === 'chat' && (
+          <div className="relative z-20 pt-16 flex-1 flex flex-col" style={{ height: '100vh' }}>
+            {accessToken ? (
+              <ChatScreen />
+            ) : (
+              <AccessGate onAuthClick={openLogin} />
+            )}
           </div>
         )}
-      </header>
 
-      {/* Main Content Area */}
-      <main className="relative z-20 flex-1 overflow-auto p-4 md:p-6 lg:p-10 hide-scrollbar mt-4">
-        <div className="max-w-7xl mx-auto h-full w-full flex flex-col">
-          {activeTab !== 'home' && (
-            <div className="mb-8 pl-4">
-              <h2 className="text-3xl font-black tracking-tighter text-white drop-shadow-sm">{headerTitle}</h2>
-            </div>
-          )}
-
-          {activeTab === 'home' && <HomeScreen onAuthClick={() => setShowAuthModal(true)} />}
-
-          <div className="flex-1 min-h-0">
+        {/* Feature pages — scrollable, padded */}
+        {(['regime', 'document', 'fund', 'forex', 'capital'] as const).includes(activeTab as any) && (
+          <main className="relative z-20 pt-16 flex-1 overflow-auto hide-scrollbar">
             {accessToken ? (
-              activeTab !== 'home' && (
-                <div className="h-full rounded-[2rem] bg-black/40 backdrop-blur-xl border border-white/5 shadow-2xl overflow-y-auto custom-scrollbar relative p-6">
-                  {/* Neon Line Top */}
-                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#10b981]/50 to-transparent"></div>
-                  {activeTab === 'chat' && <ChatScreen />}
-                  {activeTab === 'regime' && <RegimeCalculator />}
-                  {activeTab === 'document' && <DocumentUpload />}
-                  {activeTab === 'fund' && <FundAccounting />}
-                  {activeTab === 'forex' && <ForexValuation />}
-                </div>
-              )
+              <div className="min-h-[calc(100vh-64px)] px-8 py-8 max-w-7xl mx-auto">
+                {activeTab === 'regime' && <RegimeCalculator />}
+                {activeTab === 'capital' && <CapitalBudgeting />}
+                {activeTab === 'document' && <DocumentUpload />}
+                {activeTab === 'fund' && <FundAccounting />}
+                {activeTab === 'forex' && <ForexValuation />}
+              </div>
             ) : (
-              activeTab !== 'home' && (
-                <div className="flex items-center justify-center h-[calc(100%-4rem)]">
-                  <div className="text-center bg-[#111111]/80 backdrop-blur-2xl border border-white/5 p-12 rounded-[2rem] max-w-sm mx-auto shadow-2xl">
-                    <div className="w-20 h-20 bg-[#10b981]/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-[#10b981]/20">
-                      <LogOut size={28} className="text-[#10b981]" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">Access Restricted</h3>
-                    <p className="text-slate-400 mb-10 text-sm leading-relaxed">Sign in with your secure credentials to utilize the full power of our autonomous assistant.</p>
-                    <Button onClick={() => setShowAuthModal(true)} className="w-full rounded-xl bg-[#10b981] hover:bg-[#059669] text-black font-bold py-6 shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all hover:scale-105 border-0">
-                      Sign In to Continue
-                    </Button>
-                  </div>
-                </div>
-              )
+              <AccessGate onAuthClick={openLogin} />
             )}
-          </div>
-        </div>
-      </main>
+          </main>
+        )}
 
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          initialMode={authInitialMode}
+        />
       </div>
     </ErrorBoundary>
+  )
+}
+
+function AccessGate({ onAuthClick }: { onAuthClick: () => void }) {
+  return (
+    <div className="flex items-center justify-center flex-1 p-8">
+      <div className="text-center bg-black/40 backdrop-blur-2xl border border-white/5 p-12 rounded-[2rem] max-w-sm mx-auto shadow-2xl">
+        <div className="w-20 h-20 bg-[#10b981]/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-[#10b981]/20">
+          <LogOut size={28} className="text-[#10b981]" />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">Access Restricted</h3>
+        <p className="text-slate-400 mb-10 text-sm leading-relaxed">
+          Sign in with your credentials to utilize the full power of our AI assistant.
+        </p>
+        <Button
+          onClick={onAuthClick}
+          className="w-full rounded-xl bg-[#10b981] hover:bg-[#059669] text-black font-bold py-6 shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all hover:scale-105 border-0"
+        >
+          Sign In to Continue
+        </Button>
+      </div>
+    </div>
   )
 }
 

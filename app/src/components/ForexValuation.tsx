@@ -89,35 +89,32 @@ export const ForexValuation: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full px-2 py-6">
-      <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
-        
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#10b981]/10 flex items-center justify-center border border-[#10b981]/20 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-              <DollarSign className="text-[#10b981]" size={28} />
-            </div>
-            <div>
-              <h2 className="text-3xl font-black text-white tracking-tight drop-shadow-md">Forex Valuation</h2>
-              <p className="text-sm font-medium text-slate-400 mt-1 flex items-center gap-2">
-                <TrendingUp size={14} className="text-[#10b981]" /> Real-time currency conversion and forward exposure tracking.
-              </p>
-            </div>
+    <div>
+      {/* Page title */}
+      <div className="mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#10b981]/10 flex items-center justify-center border border-[#10b981]/20">
+            <DollarSign className="text-[#10b981]" size={24} />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-white tracking-tight">Forex Valuation</h1>
+            <p className="text-sm text-slate-400 mt-0.5 flex items-center gap-2">
+              <TrendingUp size={14} className="text-[#10b981]" /> Real-time currency conversion and forward exposure tracking.
+            </p>
           </div>
         </div>
+      </div>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-            <ShieldAlert size={16} />
-            {error}
-          </div>
-        )}
+      {error && (
+        <div className="mb-4 bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+          <ShieldAlert size={16} />{error}
+        </div>
+      )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Input Panel (Left Column) */}
-          <div className="col-span-1 lg:col-span-7 space-y-6">
+      <div className="flex gap-6 items-start">
+        {/* LEFT PANEL — Inputs */}
+        <div className="w-[420px] flex-shrink-0 space-y-6">
+
             
             {/* Portfolio Settings */}
             <Card className="bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/5 shadow-2xl">
@@ -286,8 +283,8 @@ export const ForexValuation: React.FC = () => {
             )}
           </div>
 
-          {/* Results Panel (Right Column) */}
-          <div className="col-span-1 lg:col-span-5">
+      {/* RIGHT PANEL — Results */}
+      <div className="flex-1 min-w-0">
             {result ? (
               <div className="space-y-6 sticky top-6 animate-in slide-in-from-right-8 duration-500">
                 <Card className="bg-[#0a0a0a]/90 backdrop-blur-xl border border-[#10b981]/30 shadow-[0_0_40px_rgba(16,185,129,0.05)] overflow-hidden relative">
@@ -359,13 +356,11 @@ export const ForexValuation: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer Warning */}
-        <div className="flex items-center justify-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-widest pt-8 pb-4 border-t border-white/5 mt-8">
-          <ShieldAlert size={14} className="text-[#10b981]" />
-          <span>Rates are indicative and subject to market volatility under local accounting standards.</span>
-        </div>
-
+      <div className="flex items-center gap-2 text-xs text-slate-600 uppercase tracking-widest pt-6 pb-4 border-t border-white/5 mt-6">
+        <ShieldAlert size={14} className="text-[#10b981]" />
+        <span>Rates are indicative and subject to market volatility under local accounting standards.</span>
       </div>
     </div>
   );
 };
+

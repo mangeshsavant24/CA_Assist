@@ -133,33 +133,34 @@ export const FundAccounting: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <TrendingUp className="text-[#10b981]" size={28} />
-        <div>
-          <h1 className="text-3xl font-bold text-white">Fund Accounting</h1>
-          <p className="text-[#a1a1aa]">Calculate NAV and analyze fund performance</p>
-        </div>
+    <div>
+      {/* Page title */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+          <TrendingUp className="text-[#10b981]" size={30} />
+          Fund Accounting
+        </h1>
+        <p className="text-[#a1a1aa] mt-1 ml-11 text-sm">Calculate NAV and analyze fund performance</p>
       </div>
 
       {error && (
-        <div className="flex gap-3 p-4 rounded-lg bg-red-950 border border-red-700 text-red-200">
+        <div className="flex gap-3 p-4 mb-4 rounded-lg bg-red-950 border border-red-700 text-red-200">
           <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
           <div>{error}</div>
         </div>
       )}
 
       {success && result && (
-        <div className="flex gap-3 p-4 rounded-lg bg-green-950 border border-green-700 text-green-200">
+        <div className="flex gap-3 p-4 mb-4 rounded-lg bg-green-950 border border-green-700 text-green-200">
           <CheckCircle2 size={20} className="flex-shrink-0 mt-0.5" />
           <div>Fund NAV calculated successfully!</div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Input Section */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="flex gap-6 items-start">
+        {/* LEFT PANEL — Inputs */}
+        <div className="w-[460px] flex-shrink-0 space-y-6">
+
           {/* Fund Details */}
           <Card className="bg-black/40 border-white/10">
             <CardHeader>
@@ -395,8 +396,8 @@ export const FundAccounting: React.FC = () => {
           </Button>
         </div>
 
-        {/* Summary & Results */}
-        <div className="space-y-6">
+        {/* RIGHT PANEL — Summary & Results */}
+        <div className="flex-1 min-w-0 space-y-6 sticky top-6">
           {/* Summary */}
           <Card className="bg-black/40 border-white/10 top-4">
             <CardHeader>

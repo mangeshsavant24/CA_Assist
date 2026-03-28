@@ -363,8 +363,17 @@ export const DocumentUpload: React.FC = () => {
   const hasResults = extractedData && !loading;
 
   return (
-    <div className="min-h-full bg-[#0a0a0a] px-4 py-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div>
+      {/* Page title */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+          <Upload className="text-[#10b981]" size={30} />
+          Document Upload
+        </h1>
+        <p className="text-[#a1a1aa] mt-1 ml-11 text-sm">Extract and analyze key financial figures from your documents</p>
+      </div>
+      <div className="max-w-3xl space-y-6">
+
         {/* Upload Zone */}
         {!hasResults && (
           <Card className="bg-black/40 border-white/10">
