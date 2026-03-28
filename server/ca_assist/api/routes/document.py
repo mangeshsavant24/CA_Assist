@@ -19,8 +19,8 @@ router = APIRouter()
 USER_DOCUMENTS_BASE = "./user_documents"
 
 
-@router.post("/upload", response_model=DocumentUploadResponse)
-def upload_document(
+@router.post("/upload")
+async def upload_document(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -30,121 +30,182 @@ def upload_document(
     File is stored in user-specific folder and indexed in ChromaDB with user_id metadata.
     Extracts financial data and determines relevance for regime calculations.
     """
-    # Create user-specific folder
-    user_folder = os.path.join(USER_DOCUMENTS_BASE, str(current_user.id))
-    os.makedirs(user_folder, exist_ok=True)
-    
-    # Save file to user folder
-    file_path = os.path.join(user_folder, file.filename)
-    
     try:
+        # Create user-specific folder
+        user_folder = os.path.join(USER_DOCUMENTS_BASE, str(current_user.id))
+        os.makedirs(user_folder, exist_ok=True)
+        
+        # Save file to user folder
+        file_path = os.path.join(user_folder, file.filename)
+        
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        
+
         # Get file size
         file_size = os.path.getsize(file_path)
-        
-        # Ingest into ChromaDB with user_id metadata
-        ingest_result = ingest_user_document(
-            file_path=file_path,
-            user_id=str(current_user.id),
-            filename=file.filename
-        )
-        
-        # Create database record
+
+        # ── Step 1: Extract text + classify document (DocumentAgent) ──
+        extraction_error = None
+        doc_agent = DocumentAgent()
+        extraction_result = doc_agent.handle(file_path)
+
+        document_type = extraction_result.get("document_type", "unknown")
+        is_relevant = extraction_result.get("is_relevant_for_regime", False)
+        is_relevant_forex = extraction_result.get("is_relevant_for_forex", False)
+        is_relevant_fund = extraction_result.get("is_relevant_for_fund", False)
+        extracted_text_preview = extraction_result.get("extracted_text_preview", "")
+        confidence = extraction_result.get("confidence", 0.0)
+        detected_by = extraction_result.get("detected_by", "heuristic")
+        llm_enhancement = extraction_result.get("llm_enhancement", "unavailable")
+
+        if extraction_result.get("error"):
+            extraction_error = extraction_result["error"]
+            print(f"Document extraction warning: {extraction_error}")
+
+        # ── Step 2: Create database record ────────────────────────────
         user_doc = UserDocument(
             user_id=current_user.id,
+            filename=file.filename,
             original_filename=file.filename,
             file_path=os.path.relpath(file_path),
             file_size=file_size,
-            description=None  # Can be added via optional form field if needed
+            file_type=file.filename.split('.')[-1] if '.' in file.filename else "unknown",
+            document_type=document_type,
+            description=None,
+            extracted_fields=extraction_result,
+            is_relevant_for_regime=is_relevant,
+            is_relevant_for_forex=is_relevant_forex,
+            is_relevant_for_fund=is_relevant_fund
         )
-        
         db.add(user_doc)
         db.commit()
         db.refresh(user_doc)
+
+        # ── Step 3: Ingest into ChromaDB ─────────────────────────────
+        from agents.document_agent import extract_text_from_file
+        full_text = extract_text_from_file(file_path)
         
-        # Extract financial data and classify document
-        extracted_data = None
-        document_type = None
-        extraction_error = None
-        
-        try:
-            doc_agent = DocumentAgent()
-            extraction_result = doc_agent.handle(file_path)
-            
-            # Extract metadata
-            document_type = extraction_result.get("document_type", "unknown")
-            is_relevant = extraction_result.get("is_relevant_for_regime", False)
-            relevance_reason = extraction_result.get("relevance_reason")
-            
-            # Create response object with all extracted fields
-            extracted_data = ExtractedDataResponse(
-                gross_salary=extraction_result.get("gross_salary"),
-                tds_deducted=extraction_result.get("tds_deducted"),
-                pf=extraction_result.get("pf"),
-                pan=extraction_result.get("pan"),
-                gstin=extraction_result.get("gstin"),
-                document_type=document_type,
-                is_relevant_for_regime=is_relevant,
-                relevance_reason=relevance_reason
-            )
-            
-            # Get advisory only for relevant documents
-            if is_relevant:
-                try:
-                    advisory_agent = AdvisoryAgent()
-                    advisory = advisory_agent.handle(
-                        query="Analyze the attached document and provide tax advice.",
-                        context_data=extraction_result
-                    )
-                except Exception as e:
-                    # Advisory is optional, don't fail the upload
-                    print(f"Advisory generation failed: {e}")
-                    
-        except Exception as e:
-            # Document processing is optional, don't fail the upload
-            extraction_error = f"Extraction failed: {str(e)}"
-            print(f"Document extraction error: {e}")
-            # Still return partial response
-            extracted_data = ExtractedDataResponse(
-                document_type="unknown",
-                is_relevant_for_regime=False,
-                relevance_reason=extraction_error
-            )
-        
-        return DocumentUploadResponse(
-            document=user_doc,
-            ingest_result=ingest_result,
-            extracted_data=extracted_data,
+        ingest_result = ingest_user_document(
+            file_path=file_path,
+            filename=file.filename,
+            user_id=str(current_user.id),
+            document_id=str(user_doc.id),
             document_type=document_type,
-            error=extraction_error
+            extracted_text=full_text,
         )
+        
+        # Update chunks_added in DB
+        chunks = ingest_result.get("chunks_added", 0)
+        user_doc.chunks_added = chunks
+        db.commit()
+
+        # ── Step 4: UI Actions ─────────────────────────────────────────
+        suggested_action = {
+            "type": "chat",
+            "label": "Ask AI about this document",
+            "tooltip": "This document has been added to your knowledge base. Ask the chatbot questions about it."
+        }
+        
+        if document_type in ["salary_slip", "form_16", "itr_document"]:
+            suggested_action = {
+                "type": "regime_calculator",
+                "label": "Open in Regime Calculator",
+                "tooltip": "Gross income, HRA, and 80C deductions will be pre-filled from your document"
+            }
+        elif document_type == "forex_document":
+            suggested_action = {
+                "type": "forex",
+                "label": "Open in Forex Valuation",
+                "tooltip": "Currency pair, amount, and exchange rate will be pre-filled"
+            }
+        elif document_type == "fund_document":
+            suggested_action = {
+                "type": "fund_accounting",
+                "label": "Open in Fund Accounting",
+                "tooltip": "Fund details and NAV will be pre-filled"
+            }
+            
+        # ── Step 5: Advisory (optional, best-effort) ──────────────────
+        if is_relevant:
+            try:
+                advisory_agent = AdvisoryAgent()
+                advisory_agent.handle(
+                    query="Analyze the attached document and provide tax advice.",
+                    context_data=extraction_result,
+                )
+            except Exception as e:
+                print(f"Advisory generation failed (non-fatal): {e}")
+
+        # ── Final standardized JSON output ─────────────────────────────
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "document_id": str(user_doc.id),
+                "filename": file.filename,
+                "file_size_bytes": file_size,
+                "document_type": document_type,
+                "confidence": float(confidence),
+                "detected_by": detected_by,
+                "is_relevant_for_regime": is_relevant,
+                "is_relevant_for_forex": is_relevant_forex,
+                "is_relevant_for_fund": is_relevant_fund,
+                "extracted_fields": extraction_result,
+                "chunks_added": chunks,
+                "llm_enhancement": llm_enhancement,
+                "suggested_action": suggested_action
+            }
+        )
+        
+    except HTTPException:
+        raise  # let FastAPI handle auth/custom errors normally
         
     except Exception as e:
-        # Clean up file if something goes wrong
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except:
-                pass
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to upload document: {str(e)}"
+        # ── Guaranteed JSON error response ───────────────────────────
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": False,
+                "error": str(e),
+                "document_type": "unknown",
+                "extracted_fields": {},
+                "is_relevant_for_regime": False,
+                "is_relevant_for_forex": False,
+                "is_relevant_for_fund": False
+            }
         )
 
 
-@router.get("/list", response_model=list[UserDocumentResponse])
-def list_user_documents(
+@router.get("/list")
+async def list_documents(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """List all documents uploaded by the current user"""
-    documents = db.query(UserDocument).filter(
-        UserDocument.user_id == current_user.id
-    ).order_by(UserDocument.uploaded_at.desc()).all()
+    docs = db.query(UserDocument)\
+             .filter(UserDocument.user_id == current_user.id)\
+             .order_by(UserDocument.uploaded_at.desc())\
+             .all()
     
-    return documents
+    return {
+        "documents": [
+            {
+                "id": str(d.id),
+                "filename": d.original_filename or d.filename,
+                "file_size_bytes": d.file_size or 0,
+                "file_type": d.file_type,
+                "document_type": d.document_type,
+                "uploaded_at": d.uploaded_at.isoformat() if d.uploaded_at else None,
+                "is_relevant_for_regime": d.is_relevant_for_regime,
+                "is_relevant_for_forex": d.is_relevant_for_forex,
+                "extracted_fields": d.extracted_fields or {}
+            }
+            for d in docs
+        ],
+        "total": len(docs)
+    }
 
 
 @router.delete("/{document_id}")

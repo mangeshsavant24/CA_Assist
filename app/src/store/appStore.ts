@@ -57,6 +57,23 @@ interface AppStore {
   // Loading states
   isLoading: boolean
   setIsLoading: (loading: boolean) => void
+  
+  // Autofill Context
+  regimeAutofill: Record<string, any> | null
+  forexAutofill: Record<string, any> | null
+  fundAutofill: Record<string, any> | null
+  chatContext: Record<string, any> | null
+  documentRefreshCount: number
+  
+  setRegimeAutofill: (data: Record<string, any> | null) => void
+  setForexAutofill: (data: Record<string, any> | null) => void
+  setFundAutofill: (data: Record<string, any> | null) => void
+  setChatContext: (data: Record<string, any> | null) => void
+  clearRegimeAutofill: () => void
+  clearForexAutofill: () => void
+  clearFundAutofill: () => void
+  clearChatContext: () => void
+  incrementDocumentRefresh: () => void
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -147,4 +164,23 @@ export const useAppStore = create<AppStore>((set) => ({
   // Loading
   isLoading: false,
   setIsLoading: (loading) => set({ isLoading: loading }),
+  
+  // Autofill Context
+  regimeAutofill: null,
+  forexAutofill: null,
+  fundAutofill: null,
+  chatContext: null,
+  documentRefreshCount: 0,
+  
+  setRegimeAutofill: (data) => set({ regimeAutofill: data }),
+  setForexAutofill: (data) => set({ forexAutofill: data }),
+  setFundAutofill: (data) => set({ fundAutofill: data }),
+  setChatContext: (data) => set({ chatContext: data }),
+  clearRegimeAutofill: () => set({ regimeAutofill: null }),
+  clearForexAutofill: () => set({ forexAutofill: null }),
+  clearFundAutofill: () => set({ fundAutofill: null }),
+  clearChatContext: () => set({ chatContext: null }),
+  incrementDocumentRefresh: () => set((state) => ({ documentRefreshCount: state.documentRefreshCount + 1 })),
 }))
+
+export const useAppContext = () => useAppStore()
