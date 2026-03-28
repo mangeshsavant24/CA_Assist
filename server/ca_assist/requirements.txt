@@ -15,6 +15,10 @@ sentence-transformers
 PyPDF2
 Pillow
 pytesseract
+# Enhanced document extraction (optional but recommended)
+pdfplumber          # Better PDF text extraction with layout awareness
+pdf2image           # Rasterize scanned PDFs for OCR (requires poppler binaries)
+python-docx         # Extract text from .docx / .doc files
 httpx
 requests
 pytest

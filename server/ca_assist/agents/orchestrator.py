@@ -35,23 +35,33 @@ class Orchestrator:
             print(f"Classification failed: {e}. Defaulting to TAX_QUERY.")
             return Intent.TAX_QUERY
 
-    def route(self, intent: Intent, query: str = "", **kwargs):
+    def route(self, intent: Intent, query: str = "", original_query: str = "", **kwargs):
+        """
+        Route the query to the correct agent.
+
+        Parameters
+        ----------
+        query          : The enriched RAG prompt (context + question) built
+                         by rag_engine.build_rag_prompt(). Agents should use
+                         this so they benefit from per-user RAG context.
+        original_query : The raw user question, used for display / logging.
+        """
         if intent == Intent.REGIME_COMPARE:
-            return None # Expected to be handled by API caller
+            return None  # Expected to be handled by API caller
         elif intent == Intent.TAX_QUERY:
             from agents.tax_agent import TaxAgent
-            return TaxAgent().handle(query)
+            return TaxAgent().handle(query or original_query)
         elif intent == Intent.GST_QUERY:
             from agents.gst_agent import GSTAgent
-            return GSTAgent().handle(query)
+            return GSTAgent().handle(query or original_query)
         elif intent == Intent.DOCUMENT_UPLOAD:
             from agents.document_agent import DocumentAgent
             return DocumentAgent().handle(kwargs.get("file_path"))
         elif intent == Intent.ADVISORY:
             from agents.advisory_agent import AdvisoryAgent
-            return AdvisoryAgent().handle(query)
+            return AdvisoryAgent().handle(query or original_query)
         elif intent == Intent.FOREX_VALUATION:
             from agents.forex_agent import ForexAgent
-            return ForexAgent().handle(query)
+            return ForexAgent().handle(query or original_query)
 
         return {"answer": "Intent not supported yet.", "citations": []}

@@ -1,142 +1,248 @@
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from rag.embedder import get_embedder
-from langchain_core.documents import Document
-from typing import Optional, List, Dict, Any
+"""
+rag/user_ingest.py
+─────────────────────────────────────────────────────────────────
+Per-user document ingestion into isolated ChromaDB collections.
+
+Collection naming contract
+  Universal knowledge : "universal_knowledge"
+  Per-user documents  : "user_{user_id}_documents"
+
+These conventions are shared with rag/rag_engine.py — do not change
+them without updating both files.
+"""
+from __future__ import annotations
+
+import logging
 import os
-import pytesseract
-from PIL import Image
+from typing import Any
+
+import chromadb
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from rag.embedder import get_embedder
+
+logger = logging.getLogger(__name__)
+
+# ── Paths ──────────────────────────────────────────────────────────
+CHROMA_DATA_DIR = os.getenv("CHROMA_PATH", "./chroma_data")
+
+# ── Chunking config ────────────────────────────────────────────────
+CHUNK_SIZE = 600
+CHUNK_OVERLAP = 80
+SPLITTER = RecursiveCharacterTextSplitter(
+    chunk_size=CHUNK_SIZE,
+    chunk_overlap=CHUNK_OVERLAP,
+    separators=["\n\n", "\n", "。", ".", " ", ""],
+)
 
 
-def _extract_text_from_image(file_path: str) -> str:
+# ═══════════════════════════════════════════════════════════════════
+# Public helpers (shared with rag_engine.py)
+# ═══════════════════════════════════════════════════════════════════
+
+def get_user_collection_name(user_id: str | int) -> str:
+    """Return the ChromaDB collection name for a specific user."""
+    return f"user_{user_id}_documents"
+
+
+def get_chroma_client() -> chromadb.PersistentClient:
     """
-    Extract text from image using pytesseract OCR.
+    Return a ChromaDB PersistentClient so collections survive restarts.
+    The path is read from CHROMA_PATH env var (default: ./chroma_data).
     """
+    os.makedirs(CHROMA_DATA_DIR, exist_ok=True)
+    return chromadb.PersistentClient(path=CHROMA_DATA_DIR)
+
+
+def collection_exists(client: chromadb.PersistentClient, name: str) -> bool:
+    """Return True if a named collection currently exists in ChromaDB."""
     try:
-        image = Image.open(file_path)
-        text = pytesseract.image_to_string(image)
-        return text
-    except Exception as e:
-        print(f"Error extracting text from image {file_path}: {e}")
-        return ""
+        existing = [c.name for c in client.list_collections()]
+        return name in existing
+    except Exception:
+        return False
 
+
+# ═══════════════════════════════════════════════════════════════════
+# PART 2 — Ingest a single user document into the user's collection
+# ═══════════════════════════════════════════════════════════════════
 
 def ingest_user_document(
     file_path: str,
-    user_id: str,
-    filename: str
-) -> Dict[str, Any]:
+    filename: str,
+    user_id: str | int,
+    document_id: str | int = "",
+    document_type: str = "unknown",
+    extracted_text: str = "",
+) -> dict[str, Any]:
     """
-    Ingest a user's uploaded document into ChromaDB with user_id metadata.
-    Handles both PDF files and images (JPG, PNG).
-    
-    Args:
-        file_path: Path to the document file (PDF, JPG, PNG)
-        user_id: UUID of the user who uploaded the document
-        filename: Original filename of the document
-        
-    Returns:
-        dict: {"success": bool, "chunks_added": int, "error": Optional[str]}
+    Ingest a user's document into their isolated ChromaDB collection.
+
+    Parameters
+    ----------
+    file_path       : Absolute or relative path to the saved file
+                      (used only for fallback text extraction if
+                      extracted_text is empty).
+    filename        : Original filename shown in the UI.
+    user_id         : The authenticated user's UUID / integer ID.
+    document_id     : Database ID of the UserDocument record (for
+                      cross-referencing metadata).
+    document_type   : Result of document_agent classification
+                      (e.g. "salary_slip", "invoice").
+    extracted_text  : Pre-extracted text from document_agent.
+                      Pass this to avoid a second OCR run.
+
+    Returns
+    -------
+    dict with keys: chunks_added, collection, document_id, error
     """
     try:
-        documents = []
-        ext = file_path.lower().split('.')[-1]
-        
-        # Handle PDF files
-        if ext == 'pdf':
-            loader = PyPDFLoader(file_path)
-            documents = loader.load()
-        
-        # Handle image files
-        elif ext in ['jpg', 'jpeg', 'png']:
-            text = _extract_text_from_image(file_path)
-            if text:
-                documents = [Document(page_content=text, metadata={"source": filename})]
-            else:
-                return {
-                    "success": False,
-                    "chunks_added": 0,
-                    "error": f"Could not extract text from image {filename}. Ensure tesseract is installed on your system."
-                }
-        else:
+        # ── 1. Obtain text ─────────────────────────────────────────
+        text = extracted_text.strip() if extracted_text else ""
+
+        # Fallback: if caller didn't supply extracted_text, extract now
+        if not text and file_path and os.path.exists(file_path):
+            try:
+                from agents.document_agent import extract_text_from_file
+                text = extract_text_from_file(file_path)
+            except Exception as exc:
+                logger.warning("Fallback text extraction failed: %s", exc)
+
+        if not text:
             return {
-                "success": False,
                 "chunks_added": 0,
-                "error": f"Unsupported file format: {ext}. Only PDF, JPG, and PNG are supported."
+                "collection": get_user_collection_name(user_id),
+                "document_id": document_id,
+                "error": "No text content could be extracted from the document.",
             }
-        
-        if not documents:
-            return {"success": False, "chunks_added": 0, "error": "No content extracted from file"}
-        
-        # Split into chunks
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=800,
-            chunk_overlap=100,
-            separators=["\n\n", "\n", " ", ""]
+
+        # ── 2. Split into chunks ───────────────────────────────────
+        raw_doc = Document(page_content=text, metadata={"source": filename})
+        chunks = SPLITTER.split_documents([raw_doc])
+        total = len(chunks)
+
+        # ── 3. Attach per-chunk metadata ───────────────────────────
+        for i, chunk in enumerate(chunks):
+            chunk.metadata.update(
+                {
+                    "user_id": str(user_id),
+                    "document_id": str(document_id),
+                    "filename": filename,
+                    "document_type": document_type,
+                    "source": "user_upload",
+                    "chunk_index": i,
+                    "total_chunks": total,
+                }
+            )
+
+        # ── 4. Store in user's isolated collection ─────────────────
+        collection_name = get_user_collection_name(user_id)
+        embedder = get_embedder()
+
+        vectorstore = Chroma(
+            collection_name=collection_name,
+            embedding_function=embedder,
+            persist_directory=CHROMA_DATA_DIR,
         )
-        
-        chunks = text_splitter.split_documents(documents)
-        
-        # Add user_id and filename to metadata of each chunk
-        for chunk in chunks:
-            chunk.metadata["user_id"] = user_id
-            chunk.metadata["original_filename"] = filename
-            chunk.metadata["document_type"] = "user_upload"
-        
-        # Store in ChromaDB
-        embeddings = get_embedder()
-        vector_store = Chroma(
-            collection_name="documents",
-            embedding_function=embeddings,
-            persist_directory="./chroma_db"
+        vectorstore.add_documents(chunks)
+
+        logger.info(
+            "Ingested %d chunks into collection '%s' for user %s (doc_id=%s)",
+            total,
+            collection_name,
+            user_id,
+            document_id,
         )
-        
-        # Add documents to vector store
-        vector_store.add_documents(chunks)
-        
         return {
-            "success": True,
-            "chunks_added": len(chunks),
-            "error": None
+            "chunks_added": total,
+            "collection": collection_name,
+            "document_id": document_id,
+            "error": None,
         }
-        
-    except Exception as e:
+
+    except Exception as exc:
+        logger.error("ingest_user_document failed: %s", exc, exc_info=True)
         return {
-            "success": False,
             "chunks_added": 0,
-            "error": str(e)
+            "collection": get_user_collection_name(user_id),
+            "document_id": document_id,
+            "error": str(exc),
         }
 
 
-def get_user_documents(user_id: str, k: int = 5) -> List[Dict[str, Any]]:
+# ═══════════════════════════════════════════════════════════════════
+# Deletion helper — removes all chunks for a given document_id
+# ═══════════════════════════════════════════════════════════════════
+
+def delete_user_document_chunks(user_id: str | int, document_id: str | int) -> int:
     """
-    Retrieve documents for a specific user from ChromaDB.
-    
-    Args:
-        user_id: UUID of the user
-        k: Maximum number of documents to retrieve
-        
-    Returns:
-        list: Documents with user_id metadata matching
+    Delete all ChromaDB chunks that belong to a specific document.
+    Returns the number of chunks removed.
     """
     try:
-        embeddings = get_embedder()
-        vector_store = Chroma(
-            collection_name="documents",
-            embedding_function=embeddings,
-            persist_directory="./chroma_db"
+        collection_name = get_user_collection_name(user_id)
+        client = get_chroma_client()
+
+        if not collection_exists(client, collection_name):
+            return 0
+
+        collection = client.get_collection(collection_name)
+        results = collection.get(where={"document_id": str(document_id)})
+        ids = results.get("ids", [])
+
+        if ids:
+            collection.delete(ids=ids)
+            logger.info(
+                "Deleted %d chunks for document_id=%s from collection '%s'",
+                len(ids),
+                document_id,
+                collection_name,
+            )
+        return len(ids)
+
+    except Exception as exc:
+        logger.error("delete_user_document_chunks failed: %s", exc, exc_info=True)
+        return 0
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Convenience: get user document list from ChromaDB (not DB)
+# ═══════════════════════════════════════════════════════════════════
+
+def get_user_documents(user_id: str | int, k: int = 5) -> list[dict]:
+    """
+    Retrieve up to k unique filenames ingested for a user.
+    Returns a list of metadata dicts, one per unique document.
+    """
+    try:
+        collection_name = get_user_collection_name(user_id)
+        client = get_chroma_client()
+
+        if not collection_exists(client, collection_name):
+            return []
+
+        collection = client.get_collection(collection_name)
+        results = collection.get(
+            where={"user_id": str(user_id)},
+            limit=k * 10,  # over-fetch so we can de-dup by filename
         )
-        
-        # Query with metadata filter for user_id
-        # This retrieves documents where user_id metadata matches
-        results = vector_store._collection.get(
-            where={"user_id": user_id},
-            limit=k
-        )
-        
-        return results or []
-        
-    except Exception as e:
-        print(f"Error retrieving user documents: {e}")
+        metadatas = results.get("metadatas", [])
+
+        # De-duplicate by filename
+        seen: set[str] = set()
+        unique = []
+        for meta in metadatas:
+            fname = meta.get("filename", "")
+            if fname and fname not in seen:
+                seen.add(fname)
+                unique.append(meta)
+                if len(unique) >= k:
+                    break
+
+        return unique
+
+    except Exception as exc:
+        logger.error("get_user_documents failed: %s", exc, exc_info=True)
         return []
