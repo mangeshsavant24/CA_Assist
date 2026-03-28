@@ -136,10 +136,10 @@ export const FundAccounting: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <TrendingUp className="text-violet-400" size={28} />
+        <TrendingUp className="text-[#10b981]" size={28} />
         <div>
-          <h1 className="text-3xl font-bold text-slate-50">Fund Accounting</h1>
-          <p className="text-slate-400">Calculate NAV and analyze fund performance</p>
+          <h1 className="text-3xl font-bold text-white">Fund Accounting</h1>
+          <p className="text-[#a1a1aa]">Calculate NAV and analyze fund performance</p>
         </div>
       </div>
 
@@ -161,31 +161,32 @@ export const FundAccounting: React.FC = () => {
         {/* Input Section */}
         <div className="lg:col-span-2 space-y-6">
           {/* Fund Details */}
-          <Card className="bg-slate-900 border-slate-700">
+          <Card className="bg-black/40 border-white/10">
             <CardHeader>
               <CardTitle>Fund Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Fund Name *
                   </label>
                   <Input
                     placeholder="e.g., General Fund 2024"
                     value={fundName}
                     onChange={(e) => setFundName(e.target.value)}
+                    className="bg-white/5 border-white/10 font-mono tracking-wide text-white focus:border-[#10b981]/50 focus:ring-[#10b981]/20 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Fund Type *
                   </label>
                   <select
                     value={fundType}
                     onChange={(e) => setFundType(e.target.value as any)}
-                    className="w-full h-10 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                   >
                     <option value="General">General</option>
                     <option value="Endowment">Endowment</option>
@@ -195,7 +196,7 @@ export const FundAccounting: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Opening Balance ({currency}) *
                   </label>
                   <Input
@@ -204,11 +205,12 @@ export const FundAccounting: React.FC = () => {
                     value={openingBalance}
                     onChange={(e) => setOpeningBalance(e.target.value)}
                     step="0.01"
+                    className="bg-white/5 border-white/10 font-mono tracking-wide text-white focus:border-[#10b981]/50 focus:ring-[#10b981]/20 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Share Classes
                   </label>
                   <Input
@@ -217,17 +219,18 @@ export const FundAccounting: React.FC = () => {
                     value={shareClasses}
                     onChange={(e) => setShareClasses(e.target.value)}
                     min="1"
+                    className="bg-white/5 border-white/10 font-mono tracking-wide text-white focus:border-[#10b981]/50 focus:ring-[#10b981]/20 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Currency
                   </label>
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as 'INR' | 'USD')}
-                    className="w-full h-10 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                   >
                     <option value="INR">INR (₹)</option>
                     <option value="USD">USD ($)</option>
@@ -238,16 +241,16 @@ export const FundAccounting: React.FC = () => {
           </Card>
 
           {/* Transactions */}
-          <Card className="bg-slate-900 border-slate-700">
+          <Card className="bg-black/40 border-white/10">
             <CardHeader>
               <CardTitle>Transactions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Add Transaction Form */}
-              <div className="space-y-4 p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-200 mb-2">
+                    <label className="block text-sm font-medium text-white mb-2">
                       Type
                     </label>
                     <select
@@ -258,7 +261,7 @@ export const FundAccounting: React.FC = () => {
                           type: e.target.value as any,
                         })
                       }
-                      className="w-full h-10 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      className="w-full h-10 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     >
                       <option value="contribution">Contribution</option>
                       <option value="withdrawal">Withdrawal</option>
@@ -267,7 +270,7 @@ export const FundAccounting: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-200 mb-2">
+                    <label className="block text-sm font-medium text-white mb-2">
                       Amount
                     </label>
                     <Input
@@ -278,11 +281,12 @@ export const FundAccounting: React.FC = () => {
                         setNewTransaction({ ...newTransaction, amount: e.target.value })
                       }
                       step="0.01"
+                      className="bg-white/5 border-white/10 font-mono tracking-wide text-white focus:border-[#10b981]/50 focus:ring-[#10b981]/20 transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-200 mb-2">
+                    <label className="block text-sm font-medium text-white mb-2">
                       Date
                     </label>
                     <Input
@@ -291,11 +295,12 @@ export const FundAccounting: React.FC = () => {
                       onChange={(e) =>
                         setNewTransaction({ ...newTransaction, date: e.target.value })
                       }
+                      className="bg-white/5 border-white/10 font-mono tracking-wide text-white focus:border-[#10b981]/50 focus:ring-[#10b981]/20 transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-200 mb-2">
+                    <label className="block text-sm font-medium text-white mb-2">
                       Description
                     </label>
                     <Input
@@ -307,6 +312,7 @@ export const FundAccounting: React.FC = () => {
                           description: e.target.value,
                         })
                       }
+                      className="bg-white/5 border-white/10 font-mono tracking-wide text-white focus:border-[#10b981]/50 focus:ring-[#10b981]/20 transition-all"
                     />
                   </div>
                 </div>
@@ -328,7 +334,7 @@ export const FundAccounting: React.FC = () => {
                   {transactions.map((transaction) => (
                     <div
                       key={transaction.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700"
+                      className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -348,20 +354,20 @@ export const FundAccounting: React.FC = () => {
                                 ? 'Withdrawal'
                                 : 'Return'}
                           </span>
-                          <span className="text-sm text-slate-400">{transaction.date}</span>
+                          <span className="text-sm text-[#a1a1aa]">{transaction.date}</span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">{transaction.description}</p>
+                        <p className="text-xs text-[#a1a1aa] mt-1">{transaction.description}</p>
                       </div>
 
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <p className="font-semibold text-slate-50">
+                          <p className="font-semibold text-white">
                             {formatCurrency(transaction.amount, currency)}
                           </p>
                         </div>
                         <button
                           onClick={() => removeTransaction(transaction.id)}
-                          className="text-slate-400 hover:text-red-400 transition-colors"
+                          className="text-[#a1a1aa] hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -370,7 +376,7 @@ export const FundAccounting: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-slate-400">
+                <div className="text-center py-8 text-[#a1a1aa]">
                   No transactions added yet. Add at least one to proceed.
                 </div>
               )}
@@ -392,16 +398,16 @@ export const FundAccounting: React.FC = () => {
         {/* Summary & Results */}
         <div className="space-y-6">
           {/* Summary */}
-          <Card className="bg-slate-900 border-slate-700 top-4">
+          <Card className="bg-black/40 border-white/10 top-4">
             <CardHeader>
               <CardTitle className="text-lg">Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wider">
+                <p className="text-xs text-[#a1a1aa] uppercase tracking-wider">
                   Opening Balance
                 </p>
-                <p className="text-2xl font-bold text-slate-50 mt-1">
+                <p className="text-2xl font-bold text-white mt-1">
                   {openingBalance ? formatCurrency(parseFloat(openingBalance), currency) : '-'}
                 </p>
               </div>
@@ -409,29 +415,29 @@ export const FundAccounting: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-green-400">Contributions:</span>
-                  <span className="text-slate-50">
+                  <span className="text-white">
                     {formatCurrency(getTransactionsByType('contribution'), currency)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-red-400">Withdrawals:</span>
-                  <span className="text-slate-50">
+                  <span className="text-white">
                     {formatCurrency(getTransactionsByType('withdrawal'), currency)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-blue-400">Returns:</span>
-                  <span className="text-slate-50">
+                  <span className="text-white">
                     {formatCurrency(getTransactionsByType('return'), currency)}
                   </span>
                 </div>
               </div>
 
-              <div className="border-t border-slate-700 pt-4">
-                <p className="text-xs text-slate-400 uppercase tracking-wider">
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-xs text-[#a1a1aa] uppercase tracking-wider">
                   Total Transactions
                 </p>
-                <p className="text-xl font-bold text-violet-400 mt-1">
+                <p className="text-xl font-bold text-[#10b981] mt-1">
                   {transactions.length}
                 </p>
               </div>
@@ -440,27 +446,27 @@ export const FundAccounting: React.FC = () => {
 
           {/* Results */}
           {result && (
-            <Card className="bg-slate-900 border-violet-600/50">
+            <Card className="bg-black/40 border-emerald-600/50">
               <CardHeader>
-                <CardTitle className="text-lg text-violet-400">NAV Results</CardTitle>
+                <CardTitle className="text-lg text-[#10b981]">NAV Results</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">
+                  <p className="text-xs text-[#a1a1aa] uppercase tracking-wider">
                     Closing Balance
                   </p>
-                  <p className="text-2xl font-bold text-slate-50 mt-1">
+                  <p className="text-2xl font-bold text-white mt-1">
                     {formatCurrency(result.nav_detail.closing_balance, currency)}
                   </p>
                 </div>
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">NAV per Unit:</span>
-                    <span className="font-semibold">{result.nav_detail.nav_per_unit.toFixed(4)}</span>
+                    <span className="text-[#a1a1aa]">NAV per Unit:</span>
+                    <span className="font-semibold text-white">{result.nav_detail.nav_per_unit.toFixed(4)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">ROI %:</span>
+                    <span className="text-[#a1a1aa]">ROI %:</span>
                     <span className="font-semibold text-green-400">
                       {result.nav_detail.roi_percentage.toFixed(2)}%
                     </span>
@@ -468,11 +474,11 @@ export const FundAccounting: React.FC = () => {
                 </div>
 
                 {result.recommendation && (
-                  <div className="mt-4 p-3 rounded-lg bg-violet-950/50 border border-violet-700/50">
-                    <p className="text-xs text-slate-400 uppercase font-semibold mb-1">
+                  <div className="mt-4 p-3 rounded-lg bg-emerald-950/30 border border-emerald-600/30">
+                    <p className="text-xs text-[#a1a1aa] uppercase font-semibold mb-1">
                       Recommendation
                     </p>
-                    <p className="text-sm text-slate-200">{result.recommendation}</p>
+                    <p className="text-sm text-white">{result.recommendation}</p>
                   </div>
                 )}
               </CardContent>

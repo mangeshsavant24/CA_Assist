@@ -65,7 +65,7 @@ const FormattedInput = ({ value, onChange, placeholder, className, disabled = fa
       value={displayValue} 
       onChange={handleChange} 
       placeholder={placeholder} 
-      className={cn("bg-slate-800 border-slate-700 font-mono tracking-wide text-white focus:border-teal-500/50 focus:ring-teal-500/20 transition-all", className)} 
+      className={cn("bg-white/5 border-white/10 font-mono tracking-wide text-white focus:border-[#10b981]/50 focus:ring-[#10b981]/20 transition-all", className)} 
       disabled={disabled}
     />
   );
@@ -98,7 +98,7 @@ const RegimeCard = ({
   return (
     <Card
       className={cn(
-        'bg-slate-900 border-slate-700',
+        'bg-[#0a0a0a] border-[#1f2937]',
         isRecommended && `border-2 ${borderColor}`
       )}
     >
@@ -114,7 +114,7 @@ const RegimeCard = ({
       <CardContent className="space-y-4">
         {/* Row: Gross Income */}
         <div className="flex justify-between items-center text-sm">
-          <span className="text-slate-400">Gross Income</span>
+          <span className="text-[#a1a1aa]">Gross Income</span>
           <span className="font-mono text-slate-100">
             {formatCurrency(data.taxable_income + (data.total_deductions || 0))}
           </span>
@@ -122,7 +122,7 @@ const RegimeCard = ({
 
         {/* Row: Total Deductions */}
         <div className="flex justify-between items-center text-sm">
-          <span className="text-slate-400">Total Deductions</span>
+          <span className="text-[#a1a1aa]">Total Deductions</span>
           <span className="font-mono text-red-400">
             −{formatCurrency(data.total_deductions || 0)}
           </span>
@@ -151,20 +151,20 @@ const RegimeCard = ({
         </button>
 
         {slabsOpen && (
-          <div className="bg-slate-800/50 rounded-lg p-3 text-xs">
+          <div className="bg-white/5 rounded-lg p-3 text-xs">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left text-slate-500 pb-2">Range</th>
-                  <th className="text-right text-slate-500 pb-2">Rate</th>
-                  <th className="text-right text-slate-500 pb-2">Tax</th>
+                <tr className="border-b border-[#1f2937]">
+                  <th className="text-left text-slate-400 pb-2">Range</th>
+                  <th className="text-right text-slate-400 pb-2">Rate</th>
+                  <th className="text-right text-slate-400 pb-2">Tax</th>
                 </tr>
               </thead>
               <tbody className="font-mono text-slate-300">
                 {data.slab_breakdown.map((slab, idx) => (
                   <tr
                     key={idx}
-                    className="border-b border-slate-700 last:border-b-0"
+                    className="border-b border-[#1f2937] last:border-b-0"
                   >
                     <td className="py-1.5">{slab.slab}</td>
                     <td className="text-right">{slab.rate}</td>
@@ -180,14 +180,14 @@ const RegimeCard = ({
 
         {/* Tax Components */}
         <div className="flex justify-between items-center text-sm">
-          <span className="text-slate-400">Base Tax</span>
+          <span className="text-[#a1a1aa]">Base Tax</span>
           <span className="font-mono text-slate-100">
             {formatCurrency(data.base_tax)}
           </span>
         </div>
 
         <div className="flex justify-between items-center text-sm">
-          <span className="text-slate-400">Health & Education Cess (4%)</span>
+          <span className="text-[#a1a1aa]">Health & Education Cess (4%)</span>
           <span className="font-mono text-slate-100">
             {formatCurrency(data.cess)}
           </span>
@@ -352,7 +352,7 @@ export const RegimeCalculator: React.FC = () => {
       : null;
 
   return (
-    <div className="min-h-full bg-slate-950 px-4 py-6">
+    <div className="min-h-full bg-[#050505] px-4 py-6">
       <div className="max-w-5xl mx-auto mb-4">
         <div className="flex gap-2">
           <button
@@ -360,8 +360,8 @@ export const RegimeCalculator: React.FC = () => {
             className={cn(
               'rounded-lg px-4 py-2 text-sm font-semibold',
               activeMode === 'regime'
-                ? 'bg-teal-600 text-white'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                ? 'bg-[#10b981] text-black'
+                : 'bg-white/10 text-slate-300 hover:bg-white/20'
             )}
           >
             Tax Regime Comparison
@@ -371,8 +371,8 @@ export const RegimeCalculator: React.FC = () => {
             className={cn(
               'rounded-lg px-4 py-2 text-sm font-semibold',
               activeMode === 'capital'
-                ? 'bg-teal-600 text-white'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                ? 'bg-[#10b981] text-black'
+                : 'bg-white/10 text-slate-300 hover:bg-white/20'
             )}
           >
             Capital Budgeting
@@ -412,15 +412,15 @@ export const RegimeCalculator: React.FC = () => {
         {/* Left Panel - Input */}
         <div className="w-full md:w-96 flex-shrink-0">
           <div className="sticky top-6">
-            <Card className="bg-slate-900 border-slate-700">
+            <Card className="bg-[#0a0a0a] border-[#1f2937]">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Calculator className="text-teal-400" />
+                  <Calculator className="text-[#10b981]" />
                   <div>
                     <CardTitle>
                       {activeMode === 'regime' ? 'Regime Comparison' : 'Capital Budgeting'}
                     </CardTitle>
-                    <p className="text-xs text-teal-400">
+                    <p className="text-xs text-[#10b981]">
                       {activeMode === 'regime' 
                         ? 'FY 2024–25 · CBDT Slabs' 
                         : 'Project Evaluation Metrics'}
@@ -449,7 +449,7 @@ export const RegimeCalculator: React.FC = () => {
                         value={grossIncome}
                         onChange={(val: string) => setGrossIncome(val)}
                       />
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[#a1a1aa] mt-1">
                         Include salary, freelance, rental income
                       </p>
                     </div>
@@ -464,7 +464,7 @@ export const RegimeCalculator: React.FC = () => {
                         value={sec80c}
                         onChange={(val: string) => setSec80c(val)}
                       />
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[#a1a1aa] mt-1">
                         ELSS, PPF, LIC, PF contributions
                       </p>
                       {sec80cWarning && (
@@ -482,7 +482,7 @@ export const RegimeCalculator: React.FC = () => {
                         value={hraExemption}
                         onChange={(val: string) => setHraExemption(val)}
                       />
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[#a1a1aa] mt-1">
                         Only applicable in Old Regime
                       </p>
                     </div>
@@ -497,7 +497,7 @@ export const RegimeCalculator: React.FC = () => {
                         value={otherDeductions}
                         onChange={(val: string) => setOtherDeductions(val)}
                       />
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[#a1a1aa] mt-1">
                         Health insurance, education loan, donations
                       </p>
                     </div>
@@ -505,7 +505,7 @@ export const RegimeCalculator: React.FC = () => {
                     {/* Advanced Section */}
                     <button
                       onClick={() => setAdvancedOpen(!advancedOpen)}
-                      className="w-full flex items-center gap-2 text-sm text-teal-400 hover:text-teal-300"
+                      className="w-full flex items-center gap-2 text-sm text-[#10b981] hover:text-[#10b981]"
                     >
                       <ChevronDown
                         size={16}
@@ -515,15 +515,15 @@ export const RegimeCalculator: React.FC = () => {
                     </button>
 
                     {advancedOpen && (
-                      <div className="border-t border-slate-700 pt-4 space-y-4">
+                      <div className="border-t border-[#1f2937] pt-4 space-y-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <label className="text-sm font-medium text-slate-300">
                               Standard Deduction
                             </label>
                             <div className="group relative flex items-center">
-                              <Info size={14} className="text-slate-500 hover:text-teal-400 cursor-help transition-colors" />
-                              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 p-2.5 bg-slate-800 text-xs text-slate-300 leading-relaxed rounded-lg shadow-2xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50 border border-slate-700/80">
+                              <Info size={14} className="text-slate-500 hover:text-[#10b981] cursor-help transition-colors" />
+                              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 p-2.5 bg-white/10 text-xs text-slate-300 leading-relaxed rounded-lg shadow-2xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-50 border border-white/10">
                                 Automatically applied to all salaried income under both regimes. 
                               </div>
                             </div>
@@ -532,10 +532,10 @@ export const RegimeCalculator: React.FC = () => {
                             type="text"
                             value="₹75,000"
                             disabled
-                            className="w-24 text-right text-slate-400 bg-transparent text-sm"
+                            className="w-24 text-right text-[#a1a1aa] bg-transparent text-sm"
                           />
                         </div>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-[#a1a1aa]">
                           Old: ₹50,000 | New: ₹75,000
                         </p>
 
@@ -546,7 +546,7 @@ export const RegimeCalculator: React.FC = () => {
                           <Input
                             type="number"
                             placeholder="Max ₹50,000"
-                            className="bg-slate-800 border-slate-700"
+                            className="bg-white/5 border-white/10"
                           />
                         </div>
                       </div>
@@ -555,7 +555,7 @@ export const RegimeCalculator: React.FC = () => {
                     <Button
                       onClick={handleCalculate}
                       disabled={loading}
-                      className="w-full bg-teal-600 hover:bg-teal-700 py-3"
+                      className="w-full bg-[#10b981] hover:bg-[#059669] text-black font-bold py-3"
                     >
                       {loading ? 'Calculating...' : 'Calculate & Compare →'}
                     </Button>
@@ -571,7 +571,7 @@ export const RegimeCalculator: React.FC = () => {
                         placeholder="Project Alpha"
                         value={capitalProjectName}
                         onChange={(e) => setCapitalProjectName(e.target.value)}
-                        className="bg-slate-800 border-slate-700"
+                        className="bg-white/5 border-white/10"
                       />
                     </div>
 
@@ -584,7 +584,7 @@ export const RegimeCalculator: React.FC = () => {
                         value={capitalInitialInvestment}
                         onChange={(val: string) => setCapitalInitialInvestment(val)}
                       />
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[#a1a1aa] mt-1">
                         Capital outlay before cash inflows start
                       </p>
                     </div>
@@ -598,9 +598,9 @@ export const RegimeCalculator: React.FC = () => {
                         placeholder="e.g. 400000,500000,600000"
                         value={capitalCashFlows}
                         onChange={(e) => setCapitalCashFlows(e.target.value)}
-                        className="bg-slate-800 border-slate-700"
+                        className="bg-white/5 border-white/10"
                       />
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[#a1a1aa] mt-1">
                         Enter post-tax project cash inflows per period
                       </p>
                     </div>
@@ -614,9 +614,9 @@ export const RegimeCalculator: React.FC = () => {
                         placeholder="e.g. 10"
                         value={capitalDiscountRate}
                         onChange={(e) => setCapitalDiscountRate(e.target.value)}
-                        className="bg-slate-800 border-slate-700"
+                        className="bg-white/5 border-white/10"
                       />
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[#a1a1aa] mt-1">
                         Cost of capital or required return rate
                       </p>
                     </div>
@@ -628,12 +628,12 @@ export const RegimeCalculator: React.FC = () => {
                       <select
                         value={capitalCurrency}
                         onChange={(e) => setCapitalCurrency(e.target.value as 'INR' | 'USD')}
-                        className="w-full bg-slate-800 border-slate-700 px-3 py-2 rounded"
+                        className="w-full bg-white/5 border-white/10 border rounded px-3 py-2"
                       >
                         <option value="INR">INR (₹)</option>
                         <option value="USD">USD ($)</option>
                       </select>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[#a1a1aa] mt-1">
                         Set unit for interpretation / reports
                       </p>
                     </div>
@@ -641,7 +641,7 @@ export const RegimeCalculator: React.FC = () => {
                     <Button
                       onClick={handleCapitalCalculate}
                       disabled={loading}
-                      className="w-full bg-teal-600 hover:bg-teal-700 py-3"
+                      className="w-full bg-[#10b981] hover:bg-[#059669] text-black font-bold py-3"
                     >
                       {loading ? 'Calculating...' : 'Evaluate Capital Budget →'}
                     </Button>
