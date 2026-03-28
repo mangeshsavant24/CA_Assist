@@ -74,7 +74,7 @@ function App() {
 
         {/* Chat — full viewport below navbar, no extra padding */}
         {activeTab === 'chat' && (
-          <div className="relative z-20 pt-16 flex-1 flex flex-col" style={{ height: '100vh' }}>
+          <div className="fixed inset-0 pt-16 z-10 flex flex-col bg-[#020617] overflow-hidden">
             {accessToken ? (
               <ChatScreen />
             ) : (

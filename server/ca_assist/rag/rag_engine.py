@@ -123,6 +123,7 @@ def query_rag(
     user_docs: list[Document] = []
     universal_docs: list[Document] = []
     has_user_docs = False
+    client = None
 
     # ── 1. Query universal collection (always) ─────────────────────
     try:
@@ -142,7 +143,7 @@ def query_rag(
     # ── 2. Query user's personal collection (if it exists) ─────────
     try:
         user_collection_name = get_user_collection_name(user_id)
-        if collection_exists(client, user_collection_name):
+        if client is not None and collection_exists(client, user_collection_name):
             has_user_docs = True
             vs_user = _load_vectorstore(user_collection_name)
             user_docs = _retrieve(vs_user, question, n_user)

@@ -30,6 +30,7 @@ interface AppStore {
   // Chat
   chatHistory: Message[]
   addMessage: (message: Message) => void
+  updateMessage: (id: string, updates: Partial<Message>) => void
   clearChat: () => void
   chatDocumentContext: { filename: string; data: Record<string, any> } | null
   setChatDocumentContext: (context: { filename: string; data: Record<string, any> } | null) => void
@@ -85,6 +86,11 @@ export const useAppStore = create<AppStore>((set) => ({
   chatHistory: [],
   addMessage: (message) => set((state) => ({
     chatHistory: [...state.chatHistory, message],
+  })),
+  updateMessage: (id, updates) => set((state) => ({
+    chatHistory: state.chatHistory.map((msg) =>
+      msg.id === id ? { ...msg, ...updates } : msg
+    ),
   })),
   clearChat: () => set({ chatHistory: [], chatDocumentContext: null }),
   chatDocumentContext: null,

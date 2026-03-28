@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/appStore';
-import { queryAPI, listDocumentsAPI } from '../lib/api';
+import { queryAPI, listDocumentsAPI, uploadDocumentAPI } from '../lib/api';
 import { cn } from '../lib/utils';
 
 interface Message {
@@ -179,7 +179,7 @@ async function deleteDocumentAPI(docId: string): Promise<boolean> {
 /* ─── Main Component ─── */
 export const ChatScreen: React.FC = () => {
   const {
-    chatHistory, addMessage, clearChat,
+    chatHistory, addMessage, updateMessage, clearChat,
     isLoading, setIsLoading,
     chatDocumentContext, setChatDocumentContext,
     setActiveTab, setDocumentExtractedData,
@@ -192,6 +192,7 @@ export const ChatScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [isUploadingContext, setIsUploadingContext] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   /* Sidebar */
@@ -218,13 +219,42 @@ export const ChatScreen: React.FC = () => {
 
   /* Consume chatContext from home strip */
   useEffect(() => {
-    if (chatContext?.pendingMessage) {
-      const msg = chatContext.pendingMessage as string;
-      handleSendMessage(msg);
+    if (chatContext?.pendingMessage || chatContext?.pendingFile) {
+      const msg = chatContext.pendingMessage as string | undefined;
+      const file = chatContext.pendingFile as File | undefined;
       clearChatContext();
+      
+      const processHomeSubmit = async () => {
+        if (file) {
+          setIsUploadingContext(true);
+          try {
+            const { userId } = useAppStore.getState();
+            await uploadDocumentAPI(file, userId);
+            await refreshDocs();
+          } catch (error) {
+            console.error('Failed to upload document from home screen', error);
+            setError('Failed to upload document.');
+          } finally {
+            setIsUploadingContext(false);
+          }
+        }
+        
+        if (msg) {
+          const stateHistory = useAppStore.getState().chatHistory;
+          const alreadySent = stateHistory.some(
+            (h) => h.role === 'user' && h.content === msg && (Date.now() - new Date(h.timestamp).getTime() < 1000)
+          );
+          
+          if (!alreadySent) {
+            handleSendMessage(msg);
+          }
+        }
+      };
+      
+      processHomeSubmit();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [chatContext?.pendingMessage, chatContext?.pendingFile]);
 
   /* Auto-scroll */
   useEffect(() => {
@@ -275,8 +305,19 @@ export const ChatScreen: React.FC = () => {
 
     setIsTyping(true);
     setIsLoading(true);
+    
     try {
-      const response = await queryAPI({ query: question });
+      // Build history from previous messages
+      const history = chatHistory.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+      
+      const response = await queryAPI({ 
+        query: question,
+        history: history.length > 0 ? history : undefined
+      });
+      
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -286,6 +327,7 @@ export const ChatScreen: React.FC = () => {
         timestamp: new Date(),
       };
       addMessage(assistantMsg);
+      
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -329,7 +371,7 @@ export const ChatScreen: React.FC = () => {
   const isEmpty = chatHistory.length === 0;
 
   return (
-    <div className="flex flex-1 min-h-0" style={{ height: 'calc(100vh - 64px)' }}>
+    <div className="flex flex-1 min-h-0 h-full overflow-hidden">
 
       {/* ── LEFT SIDEBAR ── */}
       <div
@@ -362,7 +404,7 @@ export const ChatScreen: React.FC = () => {
         </p>
 
         {/* Document list */}
-        <div className="flex-1 overflow-y-auto px-2 pb-2">
+        <div className="flex-1 overflow-y-auto min-h-0 px-2 pb-2">
           {docsLoading ? (
             <div className="space-y-1.5 p-1">
               {[1, 2, 3].map((i) => (
@@ -456,7 +498,7 @@ export const ChatScreen: React.FC = () => {
       </div>
 
       {/* ── MAIN CHAT ── */}
-      <div className="flex-1 min-w-0 flex flex-col" style={{ background: '#07090f' }}>
+      <div className="flex-1 min-w-0 flex flex-col min-h-0" style={{ background: '#07090f' }}>
 
         {/* Header */}
         <div
@@ -494,9 +536,15 @@ export const ChatScreen: React.FC = () => {
         )}
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="flex-1 overflow-y-auto min-h-0 px-5 py-5">
           <div className="max-w-3xl mx-auto space-y-5">
-            {isEmpty && !chatDocumentContext ? (
+            {isUploadingContext ? (
+              <div className="flex flex-col items-center justify-center min-h-[380px]">
+                <Loader className="w-10 h-10 text-[#10b981] animate-spin mb-4" />
+                <h2 className="text-xl font-bold text-slate-100 mb-2">Processing document...</h2>
+                <p className="text-sm text-slate-500">Extracting financial data and analyzing context</p>
+              </div>
+            ) : isEmpty && !chatDocumentContext ? (
               <div className="flex items-center justify-center min-h-[380px]">
                 <div className="text-center max-w-sm mx-auto">
                   <Zap className="w-12 h-12 text-[#10b981] mx-auto mb-5 opacity-80" />

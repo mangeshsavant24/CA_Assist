@@ -16,13 +16,15 @@ The endpoint works even if:
   - The universal collection is empty (returns LLM-only answer)
 """
 import logging
+import json
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from agents.orchestrator import Orchestrator
 from api.dependencies import get_current_user
-from api.schemas import CitedResponse, Citation, Intent
+from api.schemas import CitedResponse, Citation, Intent, QueryRequest, HistoryMessage
 from models import User
 from rag.rag_engine import build_rag_prompt, query_rag
 
@@ -31,13 +33,23 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-class QueryRequest(BaseModel):
-    query: str
-
-
 # ─────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────
+
+def _format_history_context(history: list[HistoryMessage] | None) -> str:
+    """Format conversation history into a string for the prompt context."""
+    if not history:
+        return ""
+    
+    context_lines = ["CONVERSATION HISTORY:"]
+    for msg in history[-10:]:  # Only include last 10 messages to stay within token limits
+        role = "User" if msg.role == "user" else "Assistant"
+        context_lines.append(f"{role}: {msg.content}")
+    
+    context_lines.append("\n" + "="*60 + "\n")
+    return "\n".join(context_lines)
+
 
 def _rag_citations_to_schema(raw_citations: list[dict]) -> list[Citation]:
     """Convert RAG engine citation dicts into Pydantic Citation objects."""
@@ -88,10 +100,19 @@ def handle_query(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Main chat query endpoint.
+    Main chat query endpoint with conversation history support.
 
-    Accepts { "query": "..." }
-    Returns  { "answer": "...", "citations": [...] }
+    Accepts:
+    {
+        "query": "...",
+        "history": [
+            {"role": "user", "content": "..."},
+            {"role": "assistant", "content": "..."},
+            ...
+        ]
+    }
+    
+    Returns { "answer": "...", "citations": [...] }
     """
     question = request.query.strip()
     if not question:
@@ -114,8 +135,13 @@ def handle_query(
         rag_result["user_docs_found"],
     )
 
-    # ── Step 2: Build the enriched prompt ────────────────────────
+    # ── Step 2: Build the enriched prompt with history context ────
     enriched_prompt = build_rag_prompt(question, rag_result)
+    
+    # Prepend conversation history if provided
+    history_context = _format_history_context(request.history)
+    if history_context:
+        enriched_prompt = history_context + "\nNEW QUESTION:\n" + enriched_prompt
 
     # ── Step 3: Classify intent + route to agent ─────────────────
     try:
@@ -139,7 +165,7 @@ def handle_query(
         # fetch_relevant_docs() independently, giving them per-user context.
         result = orchestrator.route(
             intent=intent,
-            query=enriched_prompt,   # ← RAG context + question bundled
+            query=enriched_prompt,   # ← RAG context + history + question bundled
             original_query=question,
         )
 
@@ -175,3 +201,94 @@ def handle_query(
             ),
             citations=[],
         )
+
+
+# ─────────────────────────────────────────────────────────────────
+# Streaming Query endpoint (SSE - Server-Sent Events)
+# ─────────────────────────────────────────────────────────────────
+
+def _stream_generator(request: QueryRequest, user_id: str):
+    """
+    Generator function for streaming query responses.
+    Yields SSE formatted data chunks as tokens arrive from the LLM.
+    """
+    try:
+        # ── Step 1: Dual-collection RAG retrieval ─────────────────────
+        rag_result = query_rag(
+            question=request.query.strip(),
+            user_id=user_id,
+            n_universal=4,
+            n_user=3,
+        )
+
+        # ── Step 2: Build the enriched prompt with history context ────
+        enriched_prompt = build_rag_prompt(request.query, rag_result)
+        
+        # Prepend conversation history if provided
+        history_context = _format_history_context(request.history)
+        if history_context:
+            enriched_prompt = history_context + "\nNEW QUESTION:\n" + enriched_prompt
+
+        # ── Step 3: Classify intent + route to agent ─────────────────
+        orchestrator = Orchestrator()
+        intent = orchestrator.classify_intent(request.query)
+
+        # For now, don't stream regime compare
+        if intent == Intent.REGIME_COMPARE:
+            yield f'data: {json.dumps({"type": "chunk", "content": "Please use the Regime Calculator tab to compare tax regimes. Upload your salary slip first for the most accurate comparison."})}\n\n'
+            yield f'data: {json.dumps({"type": "end", "citations": []})}\n\n'
+            return
+
+        # Get agent response
+        result = orchestrator.route(
+            intent=intent,
+            query=enriched_prompt,
+            original_query=request.query,
+        )
+
+        # Extract answer and citations
+        if isinstance(result, CitedResponse):
+            answer = result.answer
+            citations = result.citations
+        else:
+            answer = result.get("answer", "No answer generated.")
+            citations = _rag_citations_to_schema(rag_result.get("citations", []))
+
+        # Stream the answer word-by-word for better UX
+        # (tokens would be more granular but words are better for display)
+        words = answer.split()
+        for i, word in enumerate(words):
+            content = word + (" " if i < len(words) - 1 else "")
+            yield f'data: {json.dumps({"type": "chunk", "content": content})}\n\n'
+
+        # Send citations at the end
+        citation_list = [c.dict() if hasattr(c, 'dict') else c for c in citations]
+        yield f'data: {json.dumps({"type": "end", "citations": citation_list})}\n\n'
+
+    except Exception as exc:
+        logger.error("Stream handler error: %s", exc, exc_info=True)
+        error_msg = "An error occurred processing your query. Please try again."
+        yield f'data: {json.dumps({"type": "chunk", "content": error_msg})}\n\n'
+        yield f'data: {json.dumps({"type": "end", "citations": []})}\n\n'
+
+
+@router.post("/stream")
+def stream_query(
+    request: QueryRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Streaming query endpoint using Server-Sent Events (SSE).
+    
+    Chunks arrive as: data: {"type":"chunk","content":"token"}\n\n
+    Final message:    data: {"type":"end","citations":[...]}\n\n
+    """
+    user_id = str(current_user.id)
+    return StreamingResponse(
+        _stream_generator(request, user_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        }
+    )

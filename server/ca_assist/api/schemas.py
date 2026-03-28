@@ -2,6 +2,11 @@ from pydantic import BaseModel
 from typing import List, Optional, Literal
 from enum import Enum
 
+class HistoryMessage(BaseModel):
+    """A single message in the conversation history."""
+    role: Literal['user', 'assistant']
+    content: str
+
 class RegimeInput(BaseModel):
     gross_income: float
     sec_80c: float = 0.0
@@ -44,6 +49,11 @@ class Citation(BaseModel):
 class CitedResponse(BaseModel):
     answer: str
     citations: List[Citation]
+
+class QueryRequest(BaseModel):
+    """Chat query with optional conversation history for context."""
+    query: str
+    history: Optional[List[HistoryMessage]] = None
 
 class CapitalBudgetInput(BaseModel):
     initial_investment: float

@@ -40,7 +40,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAuthClick }) => {
     if (pendingFile) {
       setChatContext({
         pendingFile: pendingFile,
-        pendingMessage: `I've uploaded ${pendingFile.name}. Please analyze it.`,
+        pendingMessage: homeInput.trim() || `I've uploaded ${pendingFile.name}. Please analyze it.`,
       })
     } else if (homeInput.trim()) {
       setChatContext({ pendingMessage: homeInput.trim() })

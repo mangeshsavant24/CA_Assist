@@ -73,8 +73,14 @@ export const getCurrentUserAPI = async (): Promise<UserResponse> => {
 }
 
 // Query Interfaces
+export interface HistoryMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 export interface QueryRequest {
   query: string
+  history?: HistoryMessage[]
 }
 
 export interface Citation {
@@ -138,8 +144,80 @@ export interface RegimeOutput {
 }
 
 export const queryAPI = async (request: QueryRequest): Promise<CitedResponse> => {
-  const response = await apiClient.post<CitedResponse>('/query', { query: request.query })
+  const payload = {
+    query: request.query,
+    ...(request.history && { history: request.history })
+  }
+  const response = await apiClient.post<CitedResponse>('/query', payload)
   return response.data
+}
+
+export const queryAPIStream = async (
+  request: QueryRequest,
+  onChunk: (chunk: string) => void,
+  onCitationsReceived?: (citations: Citation[]) => void
+): Promise<void> => {
+  const payload = {
+    query: request.query,
+    ...(request.history && { history: request.history })
+  }
+
+  const token = localStorage.getItem('accessToken')
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_BASE_URL}/query/stream`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Streaming request failed: ${response.status}`)
+  }
+
+  const reader = response.body?.getReader()
+  if (!reader) {
+    throw new Error('Response body is not readable')
+  }
+
+  const decoder = new TextDecoder()
+  let citations: Citation[] = []
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = decoder.decode(value, { stream: true })
+      const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '))
+
+      for (const line of lines) {
+        try {
+          const jsonStr = line.replace('data: ', '').trim()
+          const parsed = JSON.parse(jsonStr)
+
+          if (parsed.type === 'chunk' && parsed.content) {
+            onChunk(parsed.content)
+          } else if (parsed.type === 'end' && parsed.citations) {
+            citations = parsed.citations
+            if (onCitationsReceived) {
+              onCitationsReceived(citations)
+            }
+          }
+        } catch (e) {
+          // Silently skip malformed JSON
+          console.debug('Failed to parse stream chunk:', line)
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
 }
 
 export const compareRegimeAPI = async (input: RegimeInput): Promise<RegimeOutput> => {
